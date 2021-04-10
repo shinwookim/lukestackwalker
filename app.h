@@ -130,8 +130,8 @@ public:
     virtual void OnClickCaller(Caller *caller);
 
     void ThreadSelectionChanged();
-    void LoadSettings(const char *fileName);
-    void LoadProfileData(const char *fileName);
+    void LoadSettings(const wchar_t *fileName);
+    void LoadProfileData(const wchar_t *fileName);
     void OnHorizontalSplitterChanging(wxSplitterEvent& event);
     void OnFindDialog(wxFindDialogEvent& event);
     wxStatusBar *OnCreateStatusBar(int number, long style, wxWindowID id, const wxString& name);

@@ -138,7 +138,7 @@ EditParent::EditParent(wxWindow* parent, wxWindowID id, const wxPoint& pos,
   m_edit->SetLineSampleView(m_lineSampleView);
   m_lineSampleView->SetEdit(m_edit);
   m_font = *wxNORMAL_FONT;
-  m_font.SetWeight(wxBOLD);
+  m_font.SetWeight(wxFONTWEIGHT_BOLD);
 };
   
 void EditParent::OnPaint(wxPaintEvent&) {
@@ -223,7 +223,7 @@ Edit::Edit (wxWindow *parent, wxWindowID id,
     SetReadOnly (g_CommonPrefs.readOnlyInitial);
     SetWrapMode (g_CommonPrefs.wrapModeInitial?
                  wxSTC_WRAP_WORD: wxSTC_WRAP_NONE);
-    wxFont font (10, wxMODERN, wxNORMAL, wxNORMAL);
+    wxFont font (10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     StyleSetFont (wxSTC_STYLE_DEFAULT, font);
     StyleSetForeground (wxSTC_STYLE_DEFAULT, *wxBLACK);
     StyleSetBackground (wxSTC_STYLE_DEFAULT, *wxWHITE);
@@ -333,7 +333,7 @@ bool Edit::InitializePrefs (const wxString &name) {
     // default fonts for all styles!
     int Nr;
     for (Nr = 0; Nr < wxSTC_STYLE_LASTPREDEFINED; Nr++) {
-        wxFont font (10, wxMODERN, wxNORMAL, wxNORMAL);
+        wxFont font (10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
         StyleSetFont (Nr, font);
     }
 
@@ -347,7 +347,7 @@ bool Edit::InitializePrefs (const wxString &name) {
         for (Nr = 0; Nr < STYLE_TYPES_COUNT; Nr++) {
             if (curInfo->styles[Nr].type == -1) continue;
             const StyleInfo &curType = g_StylePrefs [curInfo->styles[Nr].type];
-            wxFont font (curType.fontsize, wxMODERN, wxNORMAL, wxNORMAL, false,
+            wxFont font (curType.fontsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
                          curType.fontname);
             StyleSetFont (Nr, font);
             if (curType.foreground) {
@@ -429,7 +429,7 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
   Freeze();
   
   if (g_displayedSampleInfo) {
-    std::map<std::string, FileLineInfo>::iterator it =  g_displayedSampleInfo->m_lineSamples.find(filename.c_str());  
+    auto it =  g_displayedSampleInfo->m_lineSamples.find(filename.wc_str());  
     if (it != g_displayedSampleInfo->m_lineSamples.end()) {
       s_pfli = &it->second;
     }
@@ -476,18 +476,21 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
   
 
   int line = 1;
-  long lng = file.Length ();
+  long lng = file.Length();
   if (lng > 0) {
-    wxString buf;
-    wxChar *buff = buf.GetWriteBuf (lng);
-    file.Read (buff, lng);
-    buf.UngetWriteBuf ();    
-    while (buf.Len()) {
-      wxString lns = buf.BeforeFirst('\n');
-      int right = buf.Len() - lns.Len() - 1;
+    wxString str;
+    {
+      std::string buf;
+      buf.resize(lng);
+      file.Read(&buf[0], lng);
+      str = buf;
+    }
+    while (str.Len()) {
+      wxString lns = str.BeforeFirst('\n');
+      int right = str.Len() - lns.Len() - 1;
       if (right < 0)
         right = 0;
-      buf = buf.Right(right);    
+      str = str.Right(right);    
       InsertText (GetTextLength(), lns);
       line++;
     }

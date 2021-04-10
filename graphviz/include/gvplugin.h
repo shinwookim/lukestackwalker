@@ -1,18 +1,12 @@
-/* $Id: gvplugin.h,v 1.26 2008/05/23 14:34:36 glenlow Exp $ $Revision: 1.26 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 /* Header used by plugins */
 
@@ -28,7 +22,7 @@ extern "C" {
 /* 
  * Terminology:
  *
- *    package         - e.g. libgvplugin_cairo.so, or table of codegen builtins.
+ *    package         - e.g. libgvplugin_cairo.so
  *       api	      - e.g. render
  *          type      - e.g. "png", "ps"
  */
@@ -36,13 +30,12 @@ extern "C" {
     typedef struct {
 	int id;         /* an id that is only unique within a package 
 			of plugins of the same api.
-			A codegen id is unique in in the set of codegens.
 			A renderer-type such as "png" in the cairo package
 			has an id that is different from the "ps" type
 			in the same package */
-	char *type;	/* a string name, such as "png" or "ps" that
-			distinguishes different types withing the same
-			api (renderer in this case) */
+	const char *type;	/* a string name, such as "png" or "ps" that
+			distinguishes different types within the same
+			 (renderer in this case) */
 	int quality;    /* an arbitrary integer used for ordering plugins of
 			the same type from different packages */
 	void *engine;   /* pointer to the jump table for the plugin */

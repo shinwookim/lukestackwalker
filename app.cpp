@@ -35,7 +35,7 @@
 #include <wx/fdrepdlg.h>
 #include <wx/generic/statusbr.h>
 #include <wx/settings.h>
-
+#include <wx/stattext.h>
 
 
 static wxTextCtrl *s_pLogCtrl = 0;
@@ -48,10 +48,10 @@ public:
 
   virtual bool Create(wxWindow* parent) {    
     bool ret = wxListView::Create(parent,1,wxPoint(0,0),wxDefaultSize, wxLC_SMALL_ICON);
-    wxToolTip *m_tt = new wxToolTip("Use Ctrl+left-click to select multiple threads.");
-    m_tt->SetDelay(400);
-    m_tt->Enable(true);    
-    SetToolTip(m_tt);
+    wxToolTip *tt = new wxToolTip("Use Ctrl+left-click to select multiple threads.");
+    tt->SetDelay(400);
+    tt->Enable(true);    
+    SetToolTip(tt);
     return ret;
   }
 
@@ -89,7 +89,7 @@ public:
       wxString s2 = wxListView::GetItemText(item);
       unsigned int threadId = 0;
       s2 = s2.BeforeFirst(' ');
-      sscanf(s2, " 0x%x", &threadId);
+      swscanf(s2.wc_str(), L" 0x%x", &threadId);
       for (std::map<unsigned int, ThreadSampleInfo>::iterator it = g_threadSamples.begin(); it != g_threadSamples.end(); it++) {
         if (it->first == threadId)
           cpuTime += it->second.GetCPUTime_ms()/1000.0;
@@ -236,10 +236,10 @@ bool MyApp::OnInit()
     wxFileName fn(argv[1]);
     wxString ext = fn.GetExt();
     if (!ext.CmpNoCase("lsp")) {
-      frame->LoadSettings(argv[1]);
+      frame->LoadSettings(argv[1].wc_str());
     }
     if (!ext.CmpNoCase("lsd")) {
-      frame->LoadProfileData(argv[1]);      
+      frame->LoadProfileData(argv[1].wc_str());      
     }
   }
   frame->UpdateTitleBar();
@@ -344,13 +344,13 @@ void StackWalkerMainWnd::OnMRUFile(wxCommandEvent& ev) {
   }
   wxString ext = fn.GetExt();
   if (!ext.CmpNoCase("lsp")) {
-    LoadSettings(fn.GetFullPath());
+    LoadSettings(fn.GetFullPath().wc_str());
   }
   if (!ext.CmpNoCase("lsd")) {
     if (ComplainAboutNonSavedProfile()) {
       return;
     }
-    LoadProfileData(fn.GetFullPath());
+    LoadProfileData(fn.GetFullPath().wc_str());
   }
 }
 
@@ -377,7 +377,7 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   m_pFindReplaceDialog = 0;
   m_pFindReplaceData =  new wxFindReplaceData(wxFR_DOWN);
 
-  wxLog::SetTimestamp(0);
+  wxLog::DisableTimestamp();
   wxLog::SetLogLevel(1000);
 
 
@@ -520,7 +520,7 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   SetClientSize(w, h);
 
 
-  m_vertSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, GetClientSize(), wxSP_3D | wxSP_BORDER);
+  m_vertSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D | wxSP_BORDER);
 
   m_bottomNotebook = new wxNotebook(m_vertSplitter, wxID_ANY,
     wxDefaultPosition, wxDefaultSize, wxNB_TOP);
@@ -539,7 +539,7 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   m_bottomNotebook->AddPage( m_callstackView , "Callers", false);
 
 
-  m_horzSplitter = new wxSplitterWindow(m_vertSplitter, HorizontalSplitter, wxDefaultPosition, GetClientSize(), wxSP_3D | wxSP_BORDER);
+  m_horzSplitter = new wxSplitterWindow(m_vertSplitter, HorizontalSplitter, wxDefaultPosition, wxDefaultSize, wxSP_3D | wxSP_BORDER);
   
 
   m_editParent = new EditParent(m_horzSplitter, wxID_ANY);
@@ -552,7 +552,7 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
 
   m_vertSplitter->SplitHorizontally(m_horzSplitter, m_bottomNotebook);  
   m_horzSplitter->SplitVertically(m_resultsGrid, m_editParent);
-
+  m_vertSplitter->SetSashPosition(2*GetClientSize().GetHeight()/3, true);
   m_vertSplitter->UpdateSize();
   m_vertSplitter->SetMinimumPaneSize(1);  
   m_horzSplitter->UpdateSize();
@@ -646,13 +646,13 @@ void StackWalkerMainWnd::OnQuit(wxCommandEvent&) {
 
 void StackWalkerMainWnd::OnAbout(wxCommandEvent& WXUNUSED(event)) {
 
-  char buf[2048];
-  sprintf(buf,
-    _T("Luke StackWalker version %d.%d.%d - a win32 & x64 profiler (c) 2008-2010 Sami Sallinen, licensed under the BSD license\n\n\n")
+  wchar_t buf[2048];
+  swprintf(buf,
+    _T("Luke StackWalker version %d.%d.%d - a win32 & x64 profiler (c) 2008-2021 Sami Sallinen\nLicensed under the BSD license\n\n\n")
     _T("Included third party software:\n\n")
     _T("Walking the callstack (http://www.codeproject.com/KB/threads/StackWalker.aspx) - source code (c) 2005-2007 Jochen Kalmbach,\nlicensed under the BSD license\n\n")
     _T("Graphviz library (c) 1994-2004 AT&T Corp, licensed under the Common Public License\n\n")
-    _T("WxWidgets library Copyright (c) 1998-2005 Julian Smart, Robert Roebling et al, licensed under the wxWindows Library Licence\n\n")
+    _T("WxWidgets library Copyright (c) 1998-2017 Julian Smart, Robert Roebling et al, licensed under the wxWindows Library Licence\n\n")
     _T("Silk Icons by Mark James http://www.famfamfam.com/lab/icons/silk/, licensed under the Creative Commons Attribution 2.5 License\n\n")
     _T("Microsoft debugging tools for Windows redistributable components, redistributed under 'MICROSOFT SOFTWARE LICENSE TERMS'\n"),
     
@@ -662,11 +662,11 @@ void StackWalkerMainWnd::OnAbout(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void StackWalkerMainWnd::OnShowManual(wxCommandEvent& WXUNUSED(event)) {
-  char moduleFileName[1024] = {0};
+  wchar_t moduleFileName[1024] = {0};
   GetModuleFileName(0, moduleFileName, sizeof(moduleFileName));
   wxString fn = moduleFileName;
-  fn = fn.BeforeLast('\\') + wxString("\\luke stackwalker manual.pdf");
-  ShellExecute(0, "open", fn.c_str(), "", "", SW_SHOWNORMAL);
+  fn = fn.BeforeLast('\\') + wxString(L"\\luke stackwalker manual.pdf");
+  ShellExecute(0, L"open", fn.c_str(), L"", L"", SW_SHOWNORMAL);
 }
 
 void StackWalkerMainWnd::OnRunWizard(wxCommandEvent& WXUNUSED(event)) {
@@ -724,7 +724,7 @@ void StackWalkerMainWnd::OnFileSaveSettings(wxCommandEvent& ev) {
     UpdateTitleBar();
     return;
   }
-  if (!m_settings.SaveAs(m_settings.m_settingsFileName.c_str())) {
+  if (!m_settings.SaveAs(m_settings.m_settingsFileName.wc_str())) {
     wxMessageBox(wxT("Saving the settings failed."), wxT("Notification"));
   } else {
     UpdateTitleBar();
@@ -736,7 +736,7 @@ void StackWalkerMainWnd::OnFileSaveSettingsAs(wxCommandEvent& WXUNUSED(event)) {
     "", "", "Luke StackWalker project files (*.lsp)|*.lsp", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
   if (fdlg.ShowModal() == wxID_CANCEL)
     return;
-  if (!m_settings.SaveAs(fdlg.GetPath().c_str())) {
+  if (!m_settings.SaveAs(fdlg.GetPath().wc_str())) {
     wxMessageBox(wxT("Saving the settings failed."), wxT("Notification"));
   } else {
     m_fileHistory.AddFileToHistory(fdlg.GetPath());
@@ -745,7 +745,7 @@ void StackWalkerMainWnd::OnFileSaveSettingsAs(wxCommandEvent& WXUNUSED(event)) {
   UpdateTitleBar();
 }
 
-void StackWalkerMainWnd::LoadSettings(const char *fileName) {
+void StackWalkerMainWnd::LoadSettings(const wchar_t *fileName) {
   if (ComplainAboutNonSavedProfile()) {
     return;
   }
@@ -818,7 +818,7 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   if (caller->m_functionSample == m_currentActiveFs) {
     int maxSampleCount = 0;
     line = (m_currentActiveFs->m_minLine + m_currentActiveFs->m_maxLine) / 2;
-    std::map<std::string, FileLineInfo>::iterator it =  g_displayedSampleInfo->m_lineSamples.find(caller->m_functionSample->m_fileName.c_str());
+    auto it =  g_displayedSampleInfo->m_lineSamples.find(caller->m_functionSample->m_fileName.c_str());
 
     if (it != g_displayedSampleInfo->m_lineSamples.end()) {
       FileLineInfo *pfli = &it->second;
@@ -867,8 +867,8 @@ void StackWalkerMainWnd::OnGridSelect(wxGridEvent &ev) {
     prompt += " samples in all threads: ";
     std::multimap<unsigned int, unsigned int> samplesInThreads; 
     // first insert the per-thread sample counts to a multimap to get them sorted by sample count
-    for (std::map<unsigned int, ThreadSampleInfo>::iterator it = g_threadSamples.begin(); it != g_threadSamples.end(); ++it) {
-      std::map<std::string, FunctionSample>::iterator fsit = it->second.m_functionSamples.find(m_currentActiveFs->m_functionName);
+    for (auto it = g_threadSamples.begin(); it != g_threadSamples.end(); ++it) {
+      auto fsit = it->second.m_functionSamples.find(m_currentActiveFs->m_functionName);
       if (fsit != it->second.m_functionSamples.end()) {
         samplesInThreads.insert(std::pair<unsigned int, unsigned int>(fsit->second.m_sampleCount, it->first));        
       }
@@ -1018,7 +1018,7 @@ void StackWalkerMainWnd::ClearContext() {
   m_sourceEdit->SetReadOnly(true);
   m_resultsGrid->SetTable(0);
   m_currentActiveFs = 0;
-  m_callstackView->ShowCallstackToFunction("", true);
+  m_callstackView->ShowCallstackToFunction(L"", true);
   m_currentFunction = "";
   m_currentSourceFile = "";
   UpdateTitleBar();
@@ -1270,7 +1270,7 @@ void StackWalkerMainWnd::RestoreViews() {
 void StackWalkerMainWnd::OnViewAbbreviate(wxCommandEvent&) {
   std::map<wxString, wxString> before = m_settings.m_symbolAbbreviations;
   AbbreviationsDialog dlg(this, &m_settings.m_symbolAbbreviations);
-  dlg.SetLongText(m_currentFunction);
+  dlg.SetLongText(m_currentFunction.wc_str());
   if (dlg.ShowModal() == wxID_OK) {
     if (before != m_settings.m_symbolAbbreviations) {
       m_settings.m_bChanged = TRUE;    
@@ -1304,7 +1304,7 @@ void StackWalkerMainWnd::OnFileSaveProfile(wxCommandEvent&) {
   }
 }
 
-void StackWalkerMainWnd::LoadProfileData(const char *fileName) {
+void StackWalkerMainWnd::LoadProfileData(const wchar_t *fileName) {
   ShowChildWindows(true);
   ClearContext();
   if (!LoadSampleData(fileName)) {
@@ -1437,29 +1437,41 @@ void StackWalkerMainWnd::OnViewSamplesAsPercentage(wxCommandEvent&) {
   RefreshGridView();
 }
 
-void LogMessage(bool bError, const char *format, ...) {
-  if (!s_pLogCtrl)
-    return;
+void LogLineAdded(const std::wstring &msg, bool bError) {
+
+  // called in main thread to avoid deadlocks
+  
   wxTextAttr attr = s_pLogCtrl->GetDefaultStyle();
   if (bError) {
     attr.SetTextColour(*wxRED);
     s_pLogCtrl->SetDefaultStyle(attr);
   }
 
-  char buffer[10240];
-  va_list args;
-  va_start (args, format);
-  vsnprintf_s (buffer, sizeof(buffer), _TRUNCATE, format, args);
-  perror (buffer);
-  va_end (args);
-
-  wxLogMessage(buffer);
+  wxLogMessage(msg.c_str());  
 
   if (bError) {
     attr.SetTextColour(*wxBLACK);
     s_pLogCtrl->SetDefaultStyle(attr);
   }
+
   int pos = s_pLogCtrl->GetScrollRange(wxVERTICAL);
   s_pLogCtrl->SetScrollPos(wxVERTICAL, pos);
   s_pLogCtrl->ScrollLines(1);
+
+}
+
+void LogMessage(bool bError, const wchar_t *format, ...) {
+  if (!s_pLogCtrl)
+    return;
+
+  wchar_t buffer[10240];
+  va_list args;
+  va_start (args, format);
+  _vsnwprintf_s (buffer, _countof(buffer), _TRUNCATE, format, args);
+  _wperror (buffer);
+  va_end (args);
+
+  std::wstring msg = buffer;
+  
+  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([msg, bError]() {LogLineAdded(msg, bError); });
 }

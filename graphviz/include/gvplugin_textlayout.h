@@ -1,18 +1,12 @@
-/* $Id: gvplugin_textlayout.h,v 1.14 2007/08/30 19:20:21 ellson Exp $ $Revision: 1.14 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 #ifndef GVPLUGIN_TEXTLAYOUT_H
 #define GVPLUGIN_TEXTLAYOUT_H
@@ -27,7 +21,7 @@ extern "C" {
 #endif
 
     struct gvtextlayout_engine_s {
-	boolean (*textlayout) (textpara_t *para, char** fontpath);
+	boolean (*textlayout) (textspan_t *span, char** fontpath);
     };
 
 #ifdef __cplusplus

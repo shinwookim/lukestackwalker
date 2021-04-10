@@ -1,18 +1,12 @@
-/* $Id: gvplugin_render.h,v 1.29 2007/12/19 22:03:36 ellson Exp $ $Revision: 1.29 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 #ifndef GVPLUGIN_RENDER_H
 #define GVPLUGIN_RENDER_H
@@ -20,12 +14,6 @@
 #include "types.h"
 #include "gvplugin.h"
 #include "gvcjob.h"
-
-extern void gvdevice_fputs(GVJ_t * job, char *s);
-extern void gvdevice_printf(GVJ_t * job, const char *format, ...);
-extern void gvdevice_printnum(GVJ_t * job, double num);
-extern void gvdevice_printpointf(GVJ_t * job, pointf p);
-extern void gvdevice_printpointflist(GVJ_t * job, pointf *p, int n);
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,10 +39,12 @@ extern "C" {
 	void (*end_node) (GVJ_t * job);
 	void (*begin_edge) (GVJ_t * job);
 	void (*end_edge) (GVJ_t * job);
-	void (*begin_anchor) (GVJ_t * job, char *href, char *tooltip,
-			      char *target);
+	void (*begin_anchor) (GVJ_t * job,
+		char *href, char *tooltip, char *target, char *id);
 	void (*end_anchor) (GVJ_t * job);
-	void (*textpara) (GVJ_t * job, pointf p, textpara_t * str);
+	void (*begin_label) (GVJ_t * job, label_type type);
+	void (*end_label) (GVJ_t * job);
+	void (*textspan) (GVJ_t * job, pointf p, textspan_t * span);
 	void (*resolve_color) (GVJ_t * job, gvcolor_t * color);
 	void (*ellipse) (GVJ_t * job, pointf * A, int filled);
 	void (*polygon) (GVJ_t * job, pointf * A, int n, int filled);

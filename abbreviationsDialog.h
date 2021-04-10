@@ -1,4 +1,5 @@
 #pragma once
+#include <wx/listbox.h>
 
 class AbbreviationsDialog : public wxDialog {
 public:
@@ -8,7 +9,7 @@ public:
   void OnOk(wxCommandEvent&);
   void OnRemoveButton(wxCommandEvent& );
   void OnItemSelected(wxCommandEvent& );
-  void SetLongText(const char *txt) {m_longText->SetValue(txt);}
+  void SetLongText(const wchar_t *txt) {m_longText->SetValue(txt);}
 
 private:
   void CopyLocalMapToListCtrl();

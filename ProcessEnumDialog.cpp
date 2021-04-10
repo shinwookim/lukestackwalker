@@ -1,4 +1,3 @@
-#include <windows.h>
 #include <tchar.h>
 
 #include <wx/dialog.h>
@@ -28,24 +27,25 @@ ProcessEnumDialog::ProcessEnumDialog(wxWindow *parent)
   SetSizer(sizerTop);
 
   wxStaticText *static1 = new wxStaticText(this, wxID_ANY, "Currently running processes:");
-  sizerTop->Add(static1, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerTop->Add(static1, 0, wxEXPAND|wxALL, 5 );
 
   m_items = new wxListBox(this, ID_ALLITEMS_LB, wxDefaultPosition, wxSize(300, 400));
-  sizerTop->Add(m_items, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
+  sizerTop->Add(m_items, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
 
   m_sortByNameCheckBox = new wxCheckBox(this, ID_SORT, "Sort by process name");  
 
-  sizerTop->Add(m_sortByNameCheckBox, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
+  sizerTop->Add(m_sortByNameCheckBox, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
+  m_sortByNameCheckBox->Set3StateValue(wxCHK_CHECKED);
 
   wxBoxSizer *sizerBottomRow = new wxBoxSizer(wxHORIZONTAL);      
 
   m_refreshButton = new wxButton(this, ID_REFRESH, _T("&Refresh list"));  
-  sizerBottomRow->Add(m_refreshButton, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerBottomRow->Add(m_refreshButton, 0, wxEXPAND|wxALL, 5 );
   
   m_okButton = new wxButton(this, wxID_OK, _T("&OK"));
-  sizerBottomRow->Add(m_okButton, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerBottomRow->Add(m_okButton, 0, wxEXPAND|wxALL, 5 );
   m_cancelButton = new wxButton(this, wxID_CANCEL, _T("&Cancel"));
-  sizerBottomRow->Add(m_cancelButton, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerBottomRow->Add(m_cancelButton, 0, wxEXPAND|wxALL, 5 );
   
   sizerTop->Add(sizerBottomRow, 0, wxTOP|wxBOTTOM|wxALIGN_RIGHT, 5);
 
@@ -98,8 +98,8 @@ void ProcessEnumDialog::RefreshProcesses() {
   pe.dwSize = sizeof(pe);
   BOOL bRet = Process32First(hSnap, &pe);
   while (bRet) {
-    char buf[256];
-    sprintf(buf, "%04x : %s", pe.th32ProcessID, pe.szExeFile);
+    wchar_t buf[256];
+    wsprintf(buf, L"%04x : %s", pe.th32ProcessID, pe.szExeFile);
     bool bInserted = false;
     if (bSort) {
       unsigned int i = 0;      
@@ -107,7 +107,7 @@ void ProcessEnumDialog::RefreshProcesses() {
         wxString item = m_items->GetString(i);
         item = item.AfterFirst(':');
         item = item.AfterFirst(' ');
-        int cmp = _stricmp(pe.szExeFile, item.c_str());  
+        int cmp = _wcsicmp(pe.szExeFile, item.c_str());  
         if (cmp < 0) {
           bInserted = true;
           m_items->Insert(buf, i);
@@ -117,7 +117,7 @@ void ProcessEnumDialog::RefreshProcesses() {
     } 
     if (!bInserted)
       m_items->Append(buf);
-    OutputDebugString("\n");
+    OutputDebugString(L"\n");
     memset(&pe, 0, sizeof(pe));
     pe.dwSize = sizeof(pe);
     bRet = Process32Next(hSnap, &pe); 

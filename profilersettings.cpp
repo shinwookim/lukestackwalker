@@ -8,42 +8,42 @@
 
 #define FILETYPEID "Luke StackWalker Project file version %d"
 
-bool ProfilerSettings::SaveAs(std::string fname) {
-  FILE *f = fopen(fname.c_str(), "w");
+bool ProfilerSettings::SaveAs(std::wstring fname) {
+  FILE *f = _wfopen(fname.c_str(), L"w");
   if (!f)
     return false;
   fprintf(f, FILETYPEID"\n", CURRENT_VERSION);
-  fprintf(f, "exe=%s\n", m_executable.c_str());
-  fprintf(f, "args=%s\n", m_commandLineArgs.c_str());
+  fprintf(f, "exe=%s\n", (const char *)m_executable.c_str());
+  fprintf(f, "args=%s\n", (const char *)m_commandLineArgs.c_str());
   fprintf(f, "ndebugPaths=%d\n", m_debugInfoPaths.size());
   for (std::list<wxString>::iterator it = m_debugInfoPaths.begin();
        it != m_debugInfoPaths.end(); ++it) {
-         fprintf(f, "debugpath=%s\n", it->c_str());    
+         fprintf(f, "debugpath=%s\n", (const char *)it->c_str());    
   }
   fprintf(f, "sampledepth=%d\n", m_sampleDepth);
   fprintf(f, "samplingstartdelay=%d\n", m_samplingStartDelay);
   fprintf(f, "samplingtime=%d\n", m_samplingTime);
-  fprintf(f, "currentdirectory=%s\n", m_currentDirectory.c_str());
+  fprintf(f, "currentdirectory=%s\n", (const char *)m_currentDirectory.c_str());
   fprintf(f, "source substitutions=%d\n", m_sourceFileSubstitutions.size());
   for (std::map<wxString, wxString>::iterator it = m_sourceFileSubstitutions.begin(); 
        it != m_sourceFileSubstitutions.end(); ++it) {
-    fprintf(f, "orig.file=%s\n", it->first.c_str());
-    fprintf(f, "used file=%s\n", it->second.c_str());
+    fprintf(f, "orig.file=%s\n", (const char *)it->first.c_str());
+    fprintf(f, "used file=%s\n", (const char *)it->second.c_str());
   }
 
   fprintf(f, "symbol abbreviations=%d\n", m_symbolAbbreviations.size());
   for (std::map<wxString, wxString>::iterator it = m_symbolAbbreviations.begin(); 
        it != m_symbolAbbreviations.end(); ++it) {
-    fprintf(f, "partial symbol=%s\n", it->first.c_str());
-    fprintf(f, "substitute=%s\n", it->second.c_str());
+    fprintf(f, "partial symbol=%s\n", (const char *)it->first.c_str());
+    fprintf(f, "substitute=%s\n", (const char *)it->second.c_str());
   }
   fprintf(f, "useSymbolServer=%d\n", (int)m_bConnectToSymServer);
 
   fprintf(f, "environment variables=%d\n", m_environmentVariables.size());
   for (std::map<wxString, wxString>::iterator it = m_environmentVariables.begin(); 
        it != m_environmentVariables.end(); ++it) {
-    fprintf(f, "variable=%s\n", it->first.c_str());
-    fprintf(f, "value=%s\n", it->second.c_str());
+    fprintf(f, "variable=%s\n", (const char *)it->first.c_str());
+    fprintf(f, "value=%s\n", (const char *)it->second.c_str());
   }
   fprintf(f, "attach to process=%d\n", m_bAttachToProcess);
 
@@ -53,8 +53,8 @@ bool ProfilerSettings::SaveAs(std::string fname) {
   return (fclose(f) == 0);
 }
 
-bool ProfilerSettings::Load(std::string fname) {
-  FILE *f = fopen(fname.c_str(), "r");
+bool ProfilerSettings::Load(std::wstring fname) {
+  FILE *f = _wfopen(fname.c_str(), L"r");
   if (!f)
     return false;
   m_sourceFileSubstitutions.clear();
@@ -63,9 +63,8 @@ bool ProfilerSettings::Load(std::string fname) {
   if (fscanf(f, FILETYPEID, &fileVer) != 1) {
     ERR;
   }
-  char buf[1024];
+  char buf[1024] = { 0 };
   
-  buf[0] = 0;
   fscanf(f, " exe =%1023[^\n]", buf);
   m_executable = buf;
   buf[0] = 0;

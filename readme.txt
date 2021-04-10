@@ -1,3 +1,11 @@
+Release 1.0.0, April 22th 2021
+Time to declare the long beta period over and promote Luke Stackwalker version 1.0, thanks t0st! 
+- ported to visual studio 2019
+- using graphwiz 2.47.0 & wxwidgets 3.14
+- updated dbghelp.dll to latest version from Microsoft
+- fixed ~10 bugs found by new compiler version
+
+
 Release 0.9.9, Dec 22th 2010
 - Fix crash when clicking on a call-graph node with source code
 - Fix crash when having one profile loaded, source code view displaying source data and then loading another profile

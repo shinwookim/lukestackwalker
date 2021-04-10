@@ -13,16 +13,7 @@
 #pragma once
 
 #include <windows.h>
-
-// special defines for VC5/6 (if no actual PSDK is installed):
-#if _MSC_VER < 1300
-typedef unsigned __int64 DWORD64, *PDWORD64;
-#if defined(_WIN64)
-typedef unsigned __int64 SIZE_T, *PSIZE_T;
-#else
-typedef unsigned long SIZE_T, *PSIZE_T;
-#endif
-#endif  // _MSC_VER < 1300
+#include <string>
 
 class StackWalkerInternal;  // forward
 class StackWalker
@@ -64,11 +55,11 @@ public:
 
   StackWalker(
     int options = OptionsAll, // 'int' is by design, to combine the enum-flags
-    LPCSTR szSymPath = NULL, 
+    LPCWSTR szSymPath = NULL, 
     DWORD dwProcessId = GetCurrentProcessId(), 
     HANDLE hProcess = GetCurrentProcess()
     );
-  StackWalker(DWORD dwProcessId, HANDLE hProcess, LPCSTR szSymPath = NULL);
+  StackWalker(DWORD dwProcessId, HANDLE hProcess, LPCWSTR szSymPath = NULL);
   virtual ~StackWalker();
 
   typedef BOOL (__stdcall *PReadProcessMemoryRoutine)(
@@ -91,46 +82,41 @@ public:
     );
 
   void SetAbortAtPCOutsideKnownModules(bool bAbort) {m_bAbortWhenPCOutsideKnownModules = bAbort;}
-
-#if _MSC_VER >= 1300
-// due to some reasons, the "STACKWALK_MAX_NAMELEN" must be declared as "public" 
-// in older compilers in order to use it... starting with VC7 we can declare it as "protected"
-protected:
-#endif
-	enum { STACKWALK_MAX_NAMELEN = 1024 }; // max name length for found symbols
+	
 
 protected:
+  enum { STACKWALK_MAX_NAMELEN = 1024 }; // max name length for found symbols
   // Entry for each Callstack-Entry
   typedef struct CallstackEntry
   {
     DWORD64 offset;  // if 0, we have no valid entry
-    CHAR name[STACKWALK_MAX_NAMELEN];
-    CHAR undName[STACKWALK_MAX_NAMELEN];
-    CHAR undFullName[STACKWALK_MAX_NAMELEN];
+    WCHAR name[STACKWALK_MAX_NAMELEN];
+    WCHAR undName[STACKWALK_MAX_NAMELEN];
+    WCHAR undFullName[STACKWALK_MAX_NAMELEN];
     DWORD64 offsetFromSmybol;
     DWORD offsetFromLine;
     DWORD lineNumber;
-    CHAR lineFileName[STACKWALK_MAX_NAMELEN];
+    WCHAR lineFileName[STACKWALK_MAX_NAMELEN];
     DWORD symType;
     LPCSTR symTypeString;
-    CHAR moduleName[STACKWALK_MAX_NAMELEN];
+    WCHAR moduleName[STACKWALK_MAX_NAMELEN];
     DWORD64 baseOfImage;
-    CHAR loadedImageName[STACKWALK_MAX_NAMELEN];
+    WCHAR loadedImageName[STACKWALK_MAX_NAMELEN];
   } CallstackEntry;
 
-  typedef enum CallstackEntryType {firstEntry, nextEntry, lastEntry};
+  enum CallstackEntryType {firstEntry, nextEntry, lastEntry};
 
-  virtual void OnSymInit(LPCSTR szSearchPath, DWORD symOptions, LPCSTR szUserName);
-  virtual bool OnLoadModule(LPCSTR img, LPCSTR mod, DWORD64 baseAddr, DWORD size, DWORD result, LPCSTR symType, LPCSTR pdbName, ULONGLONG fileVersion, int totalModules, int currentModule);
+  virtual void OnSymInit(LPCWSTR szSearchPath, DWORD symOptions, LPCWSTR szUserName);
+  virtual bool OnLoadModule(LPCWSTR img, LPCWSTR mod, DWORD64 baseAddr, DWORD size, DWORD result, LPCWSTR symType, LPCWSTR pdbName, ULONGLONG fileVersion, int totalModules, int currentModule);
   virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry);
   virtual void OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr);
-  virtual void OnOutput(LPCSTR szText);
+  virtual void OnOutput(LPCWSTR szText);
 
   StackWalkerInternal *m_sw;
   HANDLE m_hProcess;
   DWORD m_dwProcessId;
   BOOL m_modulesLoaded;
-  LPSTR m_szSymPath;
+  std::wstring m_szSymPath;
   BOOL m_bAbortWhenPCOutsideKnownModules;
 
   int m_options;

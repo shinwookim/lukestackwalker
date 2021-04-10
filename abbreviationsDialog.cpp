@@ -26,42 +26,42 @@ AbbreviationsDialog::AbbreviationsDialog(wxWindow *parent,
   m_abbreviationsMap = abbreviationsMap;
   wxBoxSizer *sizerTop = new wxBoxSizer(wxVERTICAL);
   SetSizer(sizerTop);
-
-  wxStaticText *static1 = new wxStaticText(this, wxID_ANY, "All abbreviations:");
-  sizerTop->Add(static1, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-
+  {
+    wxStaticText* static1 = new wxStaticText(this, wxID_ANY, "All abbreviations:");
+    sizerTop->Add(static1, 0, wxEXPAND | wxALL, 5);
+  }
   m_allItems = new wxListBox(this, ID_ALLITEMS_LB, wxDefaultPosition, wxSize(300, 100));
-  sizerTop->Add(m_allItems, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
+  sizerTop->Add(m_allItems, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
 
   {
     wxStaticText *static1 = new wxStaticText(this, wxID_ANY, "Partial Symbol:");
-    sizerTop->Add(static1, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+    sizerTop->Add(static1, 0, wxEXPAND|wxALL, 5 );
   }
 
   m_longText = new wxTextCtrl(this, ID_LONG_TEXT, "", wxDefaultPosition, wxSize(300, wxDefaultCoord));
-  sizerTop->Add(m_longText, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
+  sizerTop->Add(m_longText, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
 
   {
     wxStaticText *static1 = new wxStaticText(this, wxID_ANY, "Abbreviation:");
-    sizerTop->Add(static1, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+    sizerTop->Add(static1, 0, wxEXPAND|wxALL, 5 );
   }
 
   m_shortText = new wxTextCtrl(this, ID_SHORT_TEXT, "", wxDefaultPosition, wxSize(300, wxDefaultCoord));
-  sizerTop->Add(m_shortText, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
+  sizerTop->Add(m_shortText, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, 5 );
   
 
   wxBoxSizer *sizerBottomRow = new wxBoxSizer(wxHORIZONTAL);      
 
   m_addButton = new wxButton(this, ID_ADD, _T("&Add/Modify"));  
-  sizerBottomRow->Add(m_addButton, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerBottomRow->Add(m_addButton, 0, wxEXPAND|wxALL, 5 );
   m_removeButton = new wxButton(this, ID_REMOVE, _T("&Delete"));
-  sizerBottomRow->Add(m_removeButton, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerBottomRow->Add(m_removeButton, 0, wxEXPAND|wxALL, 5 );
 
 
   m_okButton = new wxButton(this, wxID_OK, _T("&OK"));
-  sizerBottomRow->Add(m_okButton, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerBottomRow->Add(m_okButton, 0, wxEXPAND|wxALL, 5 );
   m_cancelButton = new wxButton(this, wxID_CANCEL, _T("&Cancel"));
-  sizerBottomRow->Add(m_cancelButton, 0, wxEXPAND|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+  sizerBottomRow->Add(m_cancelButton, 0, wxEXPAND|wxALL, 5 );
   sizerTop->Add(sizerBottomRow, 0, wxTOP, 10);
 
   sizerTop->SetSizeHints(this);

@@ -1,18 +1,12 @@
-/* $Id: gvcjob.h,v 1.72 2008/03/14 22:08:40 ellson Exp $ $Revision: 1.72 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 /* Common header used by both clients and plugins */
 
@@ -36,8 +30,10 @@ extern "C" {
     typedef struct gvloadimage_engine_s gvloadimage_engine_t;
 
     typedef enum { PEN_NONE, PEN_DASHED, PEN_DOTTED, PEN_SOLID } pen_type;
-    typedef enum { FILL_NONE, FILL_SOLID } fill_type;
+    typedef enum { FILL_NONE, FILL_SOLID, FILL_LINEAR, FILL_RADIAL } fill_type;
     typedef enum { FONT_REGULAR, FONT_BOLD, FONT_ITALIC } font_type;
+    typedef enum { LABEL_PLAIN, LABEL_HTML } label_type;
+
 #define PENWIDTH_NORMAL 1.
 #define PENWIDTH_BOLD 2.
     typedef enum { GVATTR_STRING, GVATTR_BOOL, GVATTR_COLOR } gvattr_t;
@@ -55,7 +51,7 @@ extern "C" {
  GVDEVICE_DOES_PAGES		provides pagination support -Tps	
  GVDEVICE_DOES_LAYERS		provides support for layers -Tps	
  GVDEVICE_EVENTS		supports mouse events -Tgtk, -Txlib	
- GVDEVICE_DOES_TRUECOLOR	supports alph channel -Tpng, -Tgtk, -Txlib 
+ GVDEVICE_DOES_TRUECOLOR	supports alpha channel -Tpng, -Tgtk, -Txlib 
  GVDEVICE_BINARY_FORMAT		Suppresses \r\n substitution for linends 
  GVDEVICE_COMPRESSED_FORMAT	controls libz compression		
  GVDEVICE_NO_WRITER		used when gvdevice is not used because device uses its own writer, -Tming, devil outputs   (FIXME seems to overlap OUTPUT_NOT_REQUIRED)
@@ -76,7 +72,7 @@ extern "C" {
  GVRENDER_DOES_TOOLTIPS		can represent tooltip info -Tcmapx, -Tsvg		
  GVRENDER_DOES_TARGETS		can represent target info (open link in a new tab or window) 
  GVRENDER_DOES_Z		render support 2.5D representation -Tvrml 
- GVRENDER_NO_BG			don't paint white background, assumes white paper -Tps 
+ GVRENDER_NO_WHITE_BG		don't paint white background, assumes white paper -Tps 
  LAYOUT_NOT_REQUIRED 		don't perform layout -Tcanon 		
  OUTPUT_NOT_REQUIRED		don't use gvdevice for output (basically when agwrite() used instead) -Tcanon, -Txdot 
  */
@@ -107,7 +103,7 @@ extern "C" {
 #define GVRENDER_DOES_TOOLTIPS (1<<22)
 #define GVRENDER_DOES_TARGETS (1<<23)
 #define GVRENDER_DOES_Z (1<<24)
-#define GVRENDER_NO_BG (1<<25)
+#define GVRENDER_NO_WHITE_BG (1<<25)
 #define LAYOUT_NOT_REQUIRED (1<<26)
 #define OUTPUT_NOT_REQUIRED (1<<27)
 
@@ -132,20 +128,20 @@ extern "C" {
         gvdevice_engine_t *engine;
         int id;
         gvdevice_features_t *features;
-        char *type;
+        const char *type;
     } gvplugin_active_device_t;
 
     typedef struct gvplugin_active_render_s {
         gvrender_engine_t *engine;
         int id;
         gvrender_features_t *features;
-        char *type;
+        const char *type;
     } gvplugin_active_render_t;
 
     typedef struct gvplugin_active_loadimage_t {
 	gvloadimage_engine_t *engine;
 	int id;
-	char *type;
+	const char *type;
     } gvplugin_active_loadimage_t;
 
     typedef struct gv_argvlist_s {
@@ -153,17 +149,17 @@ extern "C" {
 	int argc;
 	int alloc;
     } gv_argvlist_t;
-
+    
     typedef struct gvdevice_callbacks_s {
 	void (*refresh) (GVJ_t * job);
         void (*button_press) (GVJ_t * job, int button, pointf pointer);
         void (*button_release) (GVJ_t * job, int button, pointf pointer);
         void (*motion) (GVJ_t * job, pointf pointer);
-        void (*modify) (GVJ_t * job, char *name, char *value);
+        void (*modify) (GVJ_t * job, const char *name, const char *value);
         void (*del) (GVJ_t * job);  /* can't use "delete" 'cos C++ stole it */
-        void (*read) (GVJ_t * job, char *filename, char *layout);
-        void (*layout) (GVJ_t * job, char *layout);
-        void (*render) (GVJ_t * job, char *format, char *filename);
+        void (*read) (GVJ_t * job, const char *filename, const char *layout);
+        void (*layout) (GVJ_t * job, const char *layout);
+        void (*render) (GVJ_t * job, const char *format, const char *filename);
     } gvdevice_callbacks_t;
 
     typedef int (*gvevent_key_callback_t) (GVJ_t * job);
@@ -177,11 +173,13 @@ extern "C" {
 
     typedef enum {ROOTGRAPH_OBJTYPE, CLUSTER_OBJTYPE, NODE_OBJTYPE, EDGE_OBJTYPE} obj_type;
 
-    /* See comment in gvrender_core_dot.c */
+    /* If this enum is changed, the implementation of xbuf and xbufs in
+     * gvrender_core_dot.c will probably need to be changed.
+     */
     typedef enum {
 	EMIT_GDRAW, EMIT_CDRAW, EMIT_TDRAW, EMIT_HDRAW, 
-	EMIT_GLABEL, EMIT_CLABEL, EMIT_TLABEL, EMIT_HLABEL,
-	EMIT_NDRAW, EMIT_EDRAW, EMIT_NLABEL, EMIT_ELABEL,  
+	EMIT_GLABEL, EMIT_CLABEL, EMIT_TLABEL, EMIT_HLABEL, 
+	EMIT_NDRAW, EMIT_EDRAW, EMIT_NLABEL, EMIT_ELABEL,
     } emit_state_t;
 
     typedef struct obj_state_s obj_state_t;
@@ -199,7 +197,9 @@ extern "C" {
 
 	emit_state_t emit_state; 
 
-	gvcolor_t pencolor, fillcolor;
+	gvcolor_t pencolor, fillcolor, stopcolor;
+	int gradient_angle;
+	float gradient_frac;
 	pen_type pen;
 	fill_type fill;
 	double penwidth;
@@ -209,10 +209,12 @@ extern "C" {
 
 	/* fully substituted text strings */
 	char *label;
+	char *xlabel;
 	char *taillabel;
 	char *headlabel; 
 
 	char *url;              /* if GVRENDER_DOES_MAPS */
+	char *id;
 	char *labelurl;
 	char *tailurl;
 	char *headurl; 
@@ -236,13 +238,14 @@ extern "C" {
 	int explicit_edgetarget:1;
 	int explicit_tailurl:1;
 	int explicit_headurl:1;
+	int labeledgealigned:1;
 
 	/* primary mapped region - node shape, edge labels */
 	map_shape_t url_map_shape; 
 	int url_map_n;                  /* number of points for url map if GVRENDER_DOES_MAPS */
 	pointf *url_map_p;
 
-	/* additonal mapped regions for edges */
+	/* additional mapped regions for edges */
 	int url_bsplinemap_poly_n;      /* number of polygons in url bspline map
 					 if GVRENDER_DOES_MAPS && GVRENDER_DOES_MAP_BSPLINES */
 	int *url_bsplinemap_n;          /* array of url_bsplinemap_poly_n ints 
@@ -274,15 +277,15 @@ extern "C" {
 	char *input_filename;
 	int graph_index;
 
-	char *layout_type;
+	const char *layout_type;
 
-	char *output_filename;
+	const char *output_filename;
 	FILE *output_file;
 	char *output_data;
 	unsigned int output_data_allocated;
 	unsigned int output_data_position;
 
-	char *output_langname;
+	const char *output_langname;
 	int output_lang;
 
 	gvplugin_active_render_t render;
@@ -297,7 +300,7 @@ extern "C" {
 
 	void *context;		/* gd or cairo surface */
 	boolean external_context;	/* context belongs to caller */
-	unsigned char *imagedata; /* location of imagedata */
+	char *imagedata;	/* location of imagedata */
 
         int flags;		/* emit_graph flags */
 
@@ -315,9 +318,6 @@ extern "C" {
 	pointf  pad;		/* padding around bb - graph units */
 	boxf    clip;		/* clip region in graph units */
 	boxf	pageBox;	/* current page in graph units */
-#ifdef WITH_CODEGENS
-	pointf	pageOffset;	/* offset for current page in graph units */
-#endif
 	pointf	pageSize;	/* page size in graph units */
 	pointf  focus;		/* viewport focus - graph units */
 
@@ -366,11 +366,6 @@ extern "C" {
 	gvevent_key_binding_t *keybindings;
 	int numkeys;
 	void *keycodes;
-
-/* Must be last as separately compiled plugins are not compiled with WITH_CODEGENS */
-#ifdef WITH_CODEGENS
-	codegen_t *codegen;	/* current  codegen */
-#endif
     };
 
 #ifdef __cplusplus
