@@ -1,18 +1,12 @@
-/* $Id: gvcommon.h,v 1.7 2006/12/07 22:49:36 erg Exp $ $Revision: 1.7 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 #ifndef GVCOMMON_H
 #define GVCOMMON_H
@@ -22,18 +16,19 @@ extern "C" {
 #endif
 
     typedef struct GVCOMMON_s {
-	char *user;
 	char **info;
 	char *cmdname;
 	int verbose;
 	boolean config, auto_outfile_names;
-        void (*errorfn) (char *fmt, ...);
-	char **show_boxes; /* emit code for correct box coordinates */
-	char **lib; 
+        void (*errorfn) (const char *fmt, ...);
+	const char **show_boxes; /* emit code for correct box coordinates */
+	const char **lib; 
 
 	/* rendering state */
 	int viewNum;     /* current view - 1 based count of views,
 			    all pages in all layers */
+	const lt_symlist_t *builtins;
+	int demand_loading;
     } GVCOMMON_t;
 
 #ifdef __cplusplus

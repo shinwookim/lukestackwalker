@@ -118,14 +118,14 @@ public:
       mainSizer->Add(m_debugPathsLb, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5 );
 
       {
-        wxBoxSizer *subSizer = new wxBoxSizer(wxHORIZONTAL);          
-        mainSizer->Add(subSizer, 0, wxLEFT | wxRIGHT | wxBOTTOM, 5);
-        subSizer->Add(new wxButton(this, Rem_Dir_ID, _T("Remove selected directory")), 0, wxRIGHT | wxBOTTOM, 5);
-        subSizer->Add(new wxButton(this, Add_Dir_ID, _T("Add new directory")), 0, wxRIGHT | wxBOTTOM, 5);
+        wxBoxSizer *subSizer2 = new wxBoxSizer(wxHORIZONTAL);          
+        mainSizer->Add(subSizer2, 0, wxLEFT | wxRIGHT | wxBOTTOM, 5);
+        subSizer2->Add(new wxButton(this, Rem_Dir_ID, _T("Remove selected directory")), 0, wxRIGHT | wxBOTTOM, 5);
+        subSizer2->Add(new wxButton(this, Add_Dir_ID, _T("Add new directory")), 0, wxRIGHT | wxBOTTOM, 5);
       }
 
       mainSizer->AddSpacer(5);
-      mainSizer->Add(new wxStaticText(this, wxID_ANY, "* Use depth of 1 for best accuracy, 0 to gain a good call graph."), 0, wxTOP | wxRIGHT | wxALIGN_CENTER_VERTICAL, 5);   
+      mainSizer->Add(new wxStaticText(this, wxID_ANY, "* Use depth of 1 for best accuracy, 0 to gain a good call graph."), 0, wxTOP | wxRIGHT , 5);   
 
       SetSizer(mainSizer);
       mainSizer->Fit(this);
@@ -250,11 +250,13 @@ public:
     }
 
     virtual bool TransferDataFromWindow() {
+      m_pSettings->m_bAttachToProcess = m_attachToProcessCheckBox->IsChecked();
+
       m_pSettings->m_executable = m_executablePicker->GetPath();
 
-      if (!wxFileName::FileExists(m_pSettings->m_executable)) {
+      if (!m_pSettings->m_bAttachToProcess && !wxFileName::FileExists(m_pSettings->m_executable)) {
         char buf[2048];
-        sprintf(buf, "The executable [%s] does not exist.", m_pSettings->m_executable.c_str());
+        sprintf(buf, "The executable [%s] does not exist.", (const char *)m_pSettings->m_executable.c_str());
         wxMessageDialog dlg(this, buf, "Cannot continue!", wxOK | wxICON_ERROR);
         dlg.ShowModal();
         return false;
@@ -262,7 +264,7 @@ public:
 
       m_pSettings->m_commandLineArgs = m_cmdLineArgsCtrl->GetValue();
       m_pSettings->m_currentDirectory = m_currDirPicker->GetPath();
-      m_pSettings->m_bAttachToProcess = m_attachToProcessCheckBox->IsChecked();
+
 
       if (m_pSettings->m_currentDirectory.empty() && !m_pSettings->m_executable.empty()) {
         wxFileName fn(m_pSettings->m_executable);
@@ -272,7 +274,7 @@ public:
       if (!m_pSettings->m_bAttachToProcess) {
         if (!wxFileName::DirExists(m_pSettings->m_currentDirectory)) {
           char buf[2048];
-          sprintf(buf, "Directory [%s] does not exist, would you like to create it?", m_pSettings->m_currentDirectory.c_str());
+          sprintf(buf, "Directory [%s] does not exist, would you like to create it?", (const char *)m_pSettings->m_currentDirectory.c_str());
           wxMessageDialog dlg(this, buf, "Current directory does not exist", wxYES_NO);
           if (dlg.ShowModal() == wxID_YES) {
             wxFileName::Mkdir(m_pSettings->m_currentDirectory, 0777, wxPATH_MKDIR_FULL);

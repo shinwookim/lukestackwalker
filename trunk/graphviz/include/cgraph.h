@@ -1,26 +1,31 @@
-/* $Id: cgraph.h,v 1.7 2008/04/28 16:35:09 erg Exp $ $Revision: 1.7 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 #ifndef ATT_GRAPH_H
 #define ATT_GRAPH_H
 
-#include		<cdt.h>
+#include <inttypes.h>
+#include "cdt.h"
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef _WIN32
+#   ifdef EXPORT_CGRAPH
+#       define CGRAPH_API __declspec(dllexport)
+#   else
+#       define CGRAPH_API __declspec(dllimport)
+#   endif
+#else
+#   define CGRAPH_API extern
 #endif
 
 #ifndef FALSE
@@ -39,6 +44,8 @@ extern "C" {
 #define NILnode			NIL(Agnode_t*)
 #define NILedge			NIL(Agedge_t*)
 #define NILsym			NIL(Agsym_t*)
+
+typedef uint64_t IDTYPE;
 
 /* forward struct type declarations */
 typedef struct Agtag_s Agtag_t;
@@ -83,7 +90,7 @@ struct Agtag_s {
     unsigned mtflock:1;		/* move-to-front lock, see above */
     unsigned attrwf:1;		/* attrs written (parity, write.c) */
     unsigned seq:(sizeof(unsigned) * 8 - 4);	/* sequence no. */
-    unsigned long id;		/* client  ID */
+    IDTYPE id;		        /* client  ID */
 };
 
 	/* object tags */
@@ -139,7 +146,8 @@ struct Agedgepair_s {
 
 struct Agdesc_s {		/* graph descriptor */
     unsigned directed:1;	/* if edges are asymmetric */
-    unsigned strict:1;		/* if and self, multi-edges forbidden */
+    unsigned strict:1;		/* if multi-edges forbidden */
+    unsigned no_loop:1;		/* if no loops */
     unsigned maingraph:1;	/* if this is the top level graph */
     unsigned flatlock:1;	/* if sets are flattened into lists in cdt */
     unsigned no_write:1;	/* if a temporary subgraph */
@@ -150,7 +158,7 @@ struct Agdesc_s {		/* graph descriptor */
 /* disciplines for external resources needed by libgraph */
 
 struct Agmemdisc_s {		/* memory allocator */
-    void *(*open) (void);	/* independent of other resources */
+    void *(*open) (Agdisc_t*);	/* independent of other resources */
     void *(*alloc) (void *state, size_t req);
     void *(*resize) (void *state, void *ptr, size_t old, size_t req);
     void (*free) (void *state, void *ptr);
@@ -158,18 +166,19 @@ struct Agmemdisc_s {		/* memory allocator */
 };
 
 struct Agiddisc_s {		/* object ID allocator */
-    void *(*open) (Agraph_t * g);	/* associated with a graph */
-    long (*map) (void *state, int objtype, char *str, unsigned long *id,
+    void *(*open) (Agraph_t * g, Agdisc_t*);	/* associated with a graph */
+    long (*map) (void *state, int objtype, char *str, IDTYPE *id,
 		 int createflag);
-    long (*alloc) (void *state, int objtype, unsigned long id);
-    void (*free) (void *state, int objtype, unsigned long id);
-    char *(*print) (void *state, int objtype, unsigned long id);
+    long (*alloc) (void *state, int objtype, IDTYPE id);
+    void (*free) (void *state, int objtype, IDTYPE id);
+    char *(*print) (void *state, int objtype, IDTYPE id);
     void (*close) (void *state);
+    void (*idregister) (void *state, int objtype, void *obj);
 };
 
 struct Agiodisc_s {
     int (*afread) (void *chan, char *buf, int bufsize);
-    int (*putstr) (void *chan, char *str);
+    int (*putstr) (void *chan, const char *str);
     int (*flush) (void *chan);	/* sync */
     /* error messages? */
 };
@@ -181,16 +190,12 @@ struct Agdisc_s {		/* user's discipline */
 };
 
 	/* default resource disciplines */
-#if !defined(_BLD_cgraph) && defined(GVDLL)
-#define extern  __declspec(dllimport)
-#endif
 
-extern Agmemdisc_t AgMemDisc;
-extern Agiddisc_t AgIdDisc;
-extern Agiodisc_t AgIoDisc;
+CGRAPH_API Agmemdisc_t AgMemDisc;
+CGRAPH_API Agiddisc_t AgIdDisc;
+CGRAPH_API Agiodisc_t AgIoDisc;
 
-extern Agdisc_t AgDefaultDisc;
-#undef extern
+CGRAPH_API Agdisc_t AgDefaultDisc;
 
 struct Agdstate_s {
     void *mem;
@@ -221,7 +226,7 @@ struct Agclos_s {
     Agdisc_t disc;		/* resource discipline functions */
     Agdstate_t state;		/* resource closures */
     Dict_t *strdict;		/* shared string dict */
-    unsigned long seq[3];	/* local object sequence number counter */
+    uint64_t seq[3];	/* local object sequence number counter */
     Agcbstack_t *cb;		/* user and system callback function stacks */
     unsigned char callbacks_enabled;	/* issue user callbacks or hold them? */
     Dict_t *lookup_by_name[3];
@@ -240,76 +245,72 @@ struct Agraph_s {
     Agclos_t *clos;		/* shared resources */
 };
 
-
-#if _PACKAGE_ast
-/* fine control of object callbacks */
-#   if defined(_BLD_cgraph) && defined(__EXPORT__)
-#	define extern  __EXPORT__
-#   endif
-#   if !defined(_BLD_cgraph) && defined(__IMPORT__)
-#	define extern  __IMPORT__
-#   endif
-#endif
-
-extern void agpushdisc(Agraph_t * g, Agcbdisc_t * disc, void *state);
-extern int agpopdisc(Agraph_t * g, Agcbdisc_t * disc);
-extern int agcallbacks(Agraph_t * g, int flag);	/* return prev value */
+CGRAPH_API void agpushdisc(Agraph_t * g, Agcbdisc_t * disc, void *state);
+CGRAPH_API int agpopdisc(Agraph_t * g, Agcbdisc_t * disc);
+CGRAPH_API int agcallbacks(Agraph_t * g, int flag);	/* return prev value */
 
 /* graphs */
-extern Agraph_t *agopen(char *name, Agdesc_t desc, Agdisc_t * disc);
-extern int agclose(Agraph_t * g);
-extern Agraph_t *agread(void *chan, Agdisc_t * disc);
-extern void agreadline(int);
-extern void agsetfile(char *);
-extern Agraph_t *agconcat(Agraph_t * g, void *chan, Agdisc_t * disc);
-extern int agwrite(Agraph_t * g, void *chan);
-extern int agisdirected(Agraph_t * g);
-extern int agisundirected(Agraph_t * g);
-extern int agisstrict(Agraph_t * g);
+CGRAPH_API Agraph_t *agopen(char *name, Agdesc_t desc, Agdisc_t * disc);
+CGRAPH_API int agclose(Agraph_t * g);
+CGRAPH_API Agraph_t *agread(void *chan, Agdisc_t * disc);
+CGRAPH_API Agraph_t *agmemread(const char *cp);
+CGRAPH_API Agraph_t *agmemconcat(Agraph_t *g, const char *cp);
+CGRAPH_API void agreadline(int);
+CGRAPH_API void agsetfile(char *);
+CGRAPH_API Agraph_t *agconcat(Agraph_t * g, void *chan, Agdisc_t * disc);
+CGRAPH_API int agwrite(Agraph_t * g, void *chan);
+CGRAPH_API int agisdirected(Agraph_t * g);
+CGRAPH_API int agisundirected(Agraph_t * g);
+CGRAPH_API int agisstrict(Agraph_t * g);
+CGRAPH_API int agissimple(Agraph_t * g);
 
 /* nodes */
-extern Agnode_t *agnode(Agraph_t * g, char *name, int createflag);
-extern Agnode_t *agidnode(Agraph_t * g, unsigned long id, int createflag);
-extern Agnode_t *agsubnode(Agraph_t * g, Agnode_t * n, int createflag);
-extern Agnode_t *agfstnode(Agraph_t * g);
-extern Agnode_t *agnxtnode(Agraph_t * g, Agnode_t * n);
-extern Agnode_t *aglstnode(Agraph_t * g);
-extern Agnode_t *agprvnode(Agraph_t * g, Agnode_t * n);
+CGRAPH_API Agnode_t *agnode(Agraph_t * g, char *name, int createflag);
+CGRAPH_API Agnode_t *agidnode(Agraph_t * g, IDTYPE id, int createflag);
+CGRAPH_API Agnode_t *agsubnode(Agraph_t * g, Agnode_t * n, int createflag);
+CGRAPH_API Agnode_t *agfstnode(Agraph_t * g);
+CGRAPH_API Agnode_t *agnxtnode(Agraph_t * g, Agnode_t * n);
+CGRAPH_API Agnode_t *aglstnode(Agraph_t * g);
+CGRAPH_API Agnode_t *agprvnode(Agraph_t * g, Agnode_t * n);
 
-extern Agsubnode_t *agsubrep(Agraph_t * g, Agnode_t * n);
+CGRAPH_API Agsubnode_t *agsubrep(Agraph_t * g, Agnode_t * n);
+CGRAPH_API int agnodebefore(Agnode_t *u, Agnode_t *v); /* we have no shame */
 
 /* edges */
-extern Agedge_t *agedge(Agraph_t * g, Agnode_t * t, Agnode_t * h,
+CGRAPH_API Agedge_t *agedge(Agraph_t * g, Agnode_t * t, Agnode_t * h,
 			char *name, int createflag);
-extern Agedge_t *agidedge(Agraph_t * g, Agnode_t * t, Agnode_t * h,
-			  unsigned long id, int createflag);
-extern Agedge_t *agsubedge(Agraph_t * g, Agedge_t * e, int createflag);
-extern Agedge_t *agfstin(Agraph_t * g, Agnode_t * n);
-extern Agedge_t *agnxtin(Agraph_t * g, Agedge_t * e);
-extern Agedge_t *agfstout(Agraph_t * g, Agnode_t * n);
-extern Agedge_t *agnxtout(Agraph_t * g, Agedge_t * e);
-extern Agedge_t *agfstedge(Agraph_t * g, Agnode_t * n);
-extern Agedge_t *agnxtedge(Agraph_t * g, Agedge_t * e, Agnode_t * n);
+CGRAPH_API Agedge_t *agidedge(Agraph_t * g, Agnode_t * t, Agnode_t * h,
+              IDTYPE id, int createflag);
+CGRAPH_API Agedge_t *agsubedge(Agraph_t * g, Agedge_t * e, int createflag);
+CGRAPH_API Agedge_t *agfstin(Agraph_t * g, Agnode_t * n);
+CGRAPH_API Agedge_t *agnxtin(Agraph_t * g, Agedge_t * e);
+CGRAPH_API Agedge_t *agfstout(Agraph_t * g, Agnode_t * n);
+CGRAPH_API Agedge_t *agnxtout(Agraph_t * g, Agedge_t * e);
+CGRAPH_API Agedge_t *agfstedge(Agraph_t * g, Agnode_t * n);
+CGRAPH_API Agedge_t *agnxtedge(Agraph_t * g, Agedge_t * e, Agnode_t * n);
 
 /* generic */
-extern Agraph_t *agraphof(void *);
-extern char *agnameof(void *);
-extern int agrelabel(void *obj, char *name);	/* scary */
-extern int agrelabel_node(Agnode_t * n, char *newname);
-extern int agdelete(Agraph_t * g, void *obj);
-extern long agdelsubg(Agraph_t * g, Agraph_t * sub);	/* could be agclose */
-extern int agdelnode(Agraph_t * g, Agnode_t * arg_n);
-extern int agdeledge(Agraph_t * g, Agedge_t * arg_e);
-extern int agobjkind(void *);
+CGRAPH_API Agraph_t *agraphof(void* obj);
+CGRAPH_API Agraph_t *agroot(void* obj);
+CGRAPH_API int agcontains(Agraph_t *, void *);
+CGRAPH_API char *agnameof(void *);
+CGRAPH_API int agrelabel(void *obj, char *name);	/* scary */
+CGRAPH_API int agrelabel_node(Agnode_t * n, char *newname);
+CGRAPH_API int agdelete(Agraph_t * g, void *obj);
+CGRAPH_API int agdelsubg(Agraph_t * g, Agraph_t * sub);	/* could be agclose */
+CGRAPH_API int agdelnode(Agraph_t * g, Agnode_t * arg_n);
+CGRAPH_API int agdeledge(Agraph_t * g, Agedge_t * arg_e);
+CGRAPH_API int agobjkind(void *);
 
 /* strings */
-extern char *agstrdup(Agraph_t *, char *);
-extern char *agstrdup_html(Agraph_t *, char *);
-extern int aghtmlstr(char *);
-extern char *agstrbind(Agraph_t * g, char *);
-extern int agstrfree(Agraph_t *, char *);
-extern char *agstrcanon(char *, char *);
-char *agcanonStr(char *str);  /* manages its own buf */
+CGRAPH_API char *agstrdup(Agraph_t *, char *);
+CGRAPH_API char *agstrdup_html(Agraph_t *, char *);
+CGRAPH_API int aghtmlstr(char *);
+CGRAPH_API char *agstrbind(Agraph_t * g, char *);
+CGRAPH_API int agstrfree(Agraph_t *, char *);
+CGRAPH_API char *agcanon(char *, int);
+CGRAPH_API char *agstrcanon(char *, char *);
+CGRAPH_API char *agcanonStr(char *str);  /* manages its own buf */
 
 /* definitions for dynamic string attributes */
 struct Agattr_s {		/* dynamic string attributes */
@@ -325,6 +326,7 @@ struct Agsym_s {		/* symbol in one of the above dictionaries */
     int id;			/* its index in attr[] */
     unsigned char kind;		/* referent object type */
     unsigned char fixed;	/* immutable value */
+    unsigned char print;	/* always print */
 };
 
 struct Agdatadict_s {		/* set of dictionaries per graph */
@@ -334,57 +336,72 @@ struct Agdatadict_s {		/* set of dictionaries per graph */
     } dict;
 };
 
-extern Agsym_t *agattr(Agraph_t * g, int kind, char *name, char *value);
-extern Agsym_t *agattrsym(void *obj, char *name);
-extern Agsym_t *agnxtattr(Agraph_t * g, int kind, Agsym_t * attr);
-extern int      agcopyattr(void *oldobj, void *newobj);
+CGRAPH_API Agsym_t *agattr(Agraph_t * g, int kind, char *name, char *value);
+CGRAPH_API Agsym_t *agattrsym(void *obj, char *name);
+CGRAPH_API Agsym_t *agnxtattr(Agraph_t * g, int kind, Agsym_t * attr);
+CGRAPH_API int      agcopyattr(void *oldobj, void *newobj);
 
-extern void *agbindrec(void *obj, char *name, unsigned int size,
+CGRAPH_API void *agbindrec(void *obj, char *name, unsigned int size,
 		       int move_to_front);
-extern Agrec_t *aggetrec(void *obj, char *name, int move_to_front);
-extern int agdelrec(void *obj, char *name);
-extern void aginit(Agraph_t * g, int kind, char *rec_name, int rec_size,
+CGRAPH_API Agrec_t *aggetrec(void *obj, char *name, int move_to_front);
+CGRAPH_API int agdelrec(void *obj, char *name);
+CGRAPH_API void aginit(Agraph_t * g, int kind, char *rec_name, int rec_size,
 		   int move_to_front);
-extern void agclean(Agraph_t * g, int kind, char *rec_name);
+CGRAPH_API void agclean(Agraph_t * g, int kind, char *rec_name);
 
-extern char *agget(void *obj, char *name);
-extern char *agxget(void *obj, Agsym_t * sym);
-extern int agset(void *obj, char *name, char *value);
-extern int agxset(void *obj, Agsym_t * sym, char *value);
-extern int agsafeset(void* obj, char* name, char* value, char* def);
+CGRAPH_API char *agget(void *obj, char *name);
+CGRAPH_API char *agxget(void *obj, Agsym_t * sym);
+CGRAPH_API int agset(void *obj, char *name, char *value);
+CGRAPH_API int agxset(void *obj, Agsym_t * sym, char *value);
+CGRAPH_API int agsafeset(void* obj, char* name, char* value, char* def);
 
-/* defintions for subgraphs */
-extern Agraph_t *agsubg(Agraph_t * g, char *name, int cflag);	/* constructor */
-extern Agraph_t *agidsubg(Agraph_t * g, unsigned long id, int cflag);	/* constructor */
-extern Agraph_t *agfstsubg(Agraph_t * g), *agnxtsubg(Agraph_t * subg);
-extern Agraph_t *agparent(Agraph_t * g), *agroot(Agraph_t * g);
+/* definitions for subgraphs */
+CGRAPH_API Agraph_t *agsubg(Agraph_t * g, char *name, int cflag);	/* constructor */
+CGRAPH_API Agraph_t *agidsubg(Agraph_t * g, IDTYPE id, int cflag);	/* constructor */
+CGRAPH_API Agraph_t *agfstsubg(Agraph_t * g);
+CGRAPH_API Agraph_t *agnxtsubg(Agraph_t * subg);
+CGRAPH_API Agraph_t *agparent(Agraph_t * g);
 
 /* set cardinality */
-extern int agnnodes(Agraph_t * g), agnedges(Agraph_t * g);
-extern int agdegree(Agraph_t * g, Agnode_t * n, int in, int out);
+CGRAPH_API int agnnodes(Agraph_t * g);
+CGRAPH_API int agnedges(Agraph_t * g);
+CGRAPH_API int agnsubg(Agraph_t * g);
+CGRAPH_API int agdegree(Agraph_t * g, Agnode_t * n, int in, int out);
+CGRAPH_API int agcountuniqedges(Agraph_t * g, Agnode_t * n, int in, int out);
 
 /* memory */
-extern void *agalloc(Agraph_t * g, size_t size);
-extern void *agrealloc(Agraph_t * g, void *ptr, size_t oldsize,
+CGRAPH_API void *agalloc(Agraph_t * g, size_t size);
+CGRAPH_API void *agrealloc(Agraph_t * g, void *ptr, size_t oldsize,
 		       size_t size);
-extern void agfree(Agraph_t * g, void *ptr);
-extern struct _vmalloc_s *agheap(Agraph_t * g);
+CGRAPH_API void agfree(Agraph_t * g, void *ptr);
 
 /* an engineering compromise is a joy forever */
-extern void aginternalmapclearlocalnames(Agraph_t * g);
+CGRAPH_API void aginternalmapclearlocalnames(Agraph_t * g);
 
 #define agnew(g,t)		((t*)agalloc(g,sizeof(t)))
 #define agnnew(g,n,t)	((t*)agalloc(g,(n)*sizeof(t)))
 
+/* support for extra API misuse warnings if available */
+#ifdef __GNUC__
+  #define PRINTF_LIKE(index, first) __attribute__((format(printf, index, first)))
+#else
+  #define PRINTF_LIKE(index, first) /* nothing */
+#endif
+
 /* error handling */
 typedef enum { AGWARN, AGERR, AGMAX, AGPREV } agerrlevel_t;
-extern agerrlevel_t agerrno;
-extern void agseterr(agerrlevel_t);
-extern char *aglasterr(void);
-extern int agerr(agerrlevel_t level, char *fmt, ...);
-extern void agerrorf(char *fmt, ...);
-extern void agwarningf(char *fmt, ...);
-extern int agerrors(void);
+typedef int (*agusererrf) (char*);
+CGRAPH_API agerrlevel_t agseterr(agerrlevel_t);
+CGRAPH_API char *aglasterr(void);
+CGRAPH_API int agerr(agerrlevel_t level, const char *fmt, ...)
+  PRINTF_LIKE(2, 3);
+CGRAPH_API void agerrorf(const char *fmt, ...) PRINTF_LIKE(1, 2);
+CGRAPH_API void agwarningf(const char *fmt, ...) PRINTF_LIKE(1, 2);
+CGRAPH_API int agerrors(void);
+CGRAPH_API int agreseterrors(void);
+CGRAPH_API agusererrf agseterrf(agusererrf);
+
+#undef PRINTF_LIKE
 
 /* data access macros */
 /* this assumes that e[0] is out and e[1] is inedge, see edgepair in edge.c  */
@@ -395,26 +412,20 @@ extern int agerrors(void);
 #define AGMKIN(e)		(AGTYPE(e) == AGINEDGE?  (e): AGOUT2IN(e))
 #define AGTAIL(e)		(AGMKIN(e)->node)
 #define AGHEAD(e)		(AGMKOUT(e)->node)
+#define AGEQEDGE(e,f)		(AGMKOUT(e) == AGMKOUT(f))
+/* These macros are also exposed as functions, so they can be linked against. */
 #define agtail(e)		AGTAIL(e)
 #define aghead(e)		AGHEAD(e)
 #define agopp(e)		AGOPP(e)
+#define ageqedge(e,f)		AGEQEDGE(e,f)
 
 #define TAILPORT_ID		"tailport"
 #define HEADPORT_ID		"headport"
 
-#if _PACKAGE_ast
-#   if !defined(_BLD_cgraph) && defined(__IMPORT__)
-#	define extern  __IMPORT__
-#   endif
-#endif
-#if !defined(_BLD_cgraph) && defined(GVDLL)
-#define extern  __declspec(dllimport)
-#endif
-
-extern Agdesc_t Agdirected, Agstrictdirected, Agundirected,
-    Agstrictundirected;
-
-#undef extern
+CGRAPH_API Agdesc_t Agdirected;
+CGRAPH_API Agdesc_t Agstrictdirected;
+CGRAPH_API Agdesc_t Agundirected;
+CGRAPH_API Agdesc_t Agstrictundirected;
 
 /* fast graphs */
 void agflatten(Agraph_t * g, int flag);
@@ -444,10 +455,6 @@ and edges are embedded in main graph objects but allocated separately in subgrap
 #define AGSNMAIN(sn)        ((sn)==(&((sn)->node->mainsub)))
 #define EDGEOF(sn,rep)		(AGSNMAIN(sn)?((Agedge_t*)((unsigned char*)(rep) - offsetof(Agedge_t,seq_link))) : ((Dthold_t*)(rep))->obj)
 
-#undef extern
-#if _PACKAGE_ast
-_END_EXTERNS_
-#endif
 #ifdef __cplusplus
 }
 #endif

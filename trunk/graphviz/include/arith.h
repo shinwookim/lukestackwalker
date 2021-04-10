@@ -1,21 +1,15 @@
-/* $Id: arith.h,v 1.12 2008/05/15 14:51:09 ellson Exp $ $Revision: 1.12 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 /* geometric functions (e.g. on points and boxes) with application to, but
- * no specific dependance on graphs */
+ * no specific dependence on graphs */
 
 #ifndef GV_ARITH_H
 #define GV_ARITH_H
@@ -26,9 +20,6 @@
 #endif
 
 #include <limits.h>
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
 #include <math.h>
 
 #ifdef __cplusplus
@@ -45,10 +36,9 @@ extern "C" {
 #endif
 #define MAX(a,b)	((a)>(b)?(a):(b))
 
-#ifdef ABS
-#undef ABS
-#endif
-#define ABS(a)		((a) >= 0 ? (a) : -(a))
+#define AVG(a,b)	((a + b) / 2)
+#define SGN(a)		(((a)<0)? -1 : 1)
+#define CMP(a,b)	(((a)<(b)) ? -1 : (((a)>(b)) ? 1 : 0))
 
 #ifndef INT_MAX
 #define	INT_MAX		((int)(~(unsigned)0 >> 1))
@@ -67,7 +57,7 @@ extern "C" {
 #endif
 
 #ifndef MAXFLOAT
-#define MAXFLOAT	((float)3.40282347e+38)
+#define MAXFLOAT	((float)3.40282347e+38)  // exact value: 0x1.fffffep+127f
 #endif
 
 #ifdef BETWEEN

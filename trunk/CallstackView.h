@@ -18,7 +18,7 @@ public:
 };
 
 class CallStackView: public wxScrolledWindow  {
-  std::string m_funcName;
+  std::wstring m_funcName;
   wxNotebook *m_parent;
   wxFont m_font;
   GVC_t *m_gvc;
@@ -34,7 +34,7 @@ class CallStackView: public wxScrolledWindow  {
 public:
   CallStackView( wxNotebook *parent, ProfilerSettings *pSettings );
   ~CallStackView();
-  void ShowCallstackToFunction(const char *funcName, bool bSkipPCInUnknownModules);
+  void ShowCallstackToFunction(const wchar_t *funcName, bool bSkipPCInUnknownModules);
   void DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules);
   
   void OnDraw(wxDC &dc);

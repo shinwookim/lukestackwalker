@@ -151,7 +151,6 @@ void ProfileProgressDialog::OnClose(wxCloseEvent&) {
 wxThread::ExitCode ProfileProgressDialog::Entry() {  
   m_status = &m_statusData;
   m_bProfileReturnValue = SampleProcess(m_settings, m_status, m_processId);
-  
   m_status->bFinishedSampling = true;
   return 0;
 }

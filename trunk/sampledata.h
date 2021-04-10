@@ -7,7 +7,7 @@
 #include "profilersettings.h"
 #include "graphviz\include\gvc.h"
 
-void LogMessage(bool bError, const char *format, ...);
+void LogMessage(bool bError, const wchar_t *format, ...);
 
 struct FunctionSample;
 
@@ -53,7 +53,7 @@ struct LineInfo {
 };
 
 struct FileLineInfo {
-  std::string m_fileName;
+  std::wstring m_fileName;
   std::vector<LineInfo> m_lineSamples;
 };
 
@@ -65,9 +65,9 @@ struct FunctionSample { // data struct for top-of-stack samples
     m_minLine = std::numeric_limits<int>::max();
     m_bIgnoredFromDisplay = false;
   }
-  std::string m_functionName;
-  std::string m_fileName;
-  std::string m_moduleName;
+  std::wstring m_functionName;
+  std::wstring m_fileName;
+  std::wstring m_moduleName;
 
   int m_minLine;
   int m_maxLine;
@@ -78,8 +78,8 @@ struct FunctionSample { // data struct for top-of-stack samples
 };
 
 struct ThreadSampleInfo {
-  std::map<std::string, FunctionSample> m_functionSamples;
-  std::map<std::string, FileLineInfo> m_lineSamples;
+  std::map<std::wstring, FunctionSample> m_functionSamples;
+  std::map<std::wstring, FileLineInfo> m_lineSamples;
   std::list<FunctionSample *> m_sortedFunctionSamples;
   int m_totalSamples;
   __int64 m_kernelTimeStart;

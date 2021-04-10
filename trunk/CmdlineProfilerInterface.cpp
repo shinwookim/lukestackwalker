@@ -22,11 +22,11 @@ ProfilerProgressStatus *PrepareStatusInSharedMemory() {
   }
 
   DWORD id = GetCurrentProcessId();
-  char buf[256];
-  sprintf(buf, "Global\\LukeStackWalkerStatus-%d", id);
+  wchar_t buf[256];
+  swprintf(buf, _countof(buf), L"Global\\LukeStackWalkerStatus-%d", id);
   s_sharedMemFileName = buf;
 
-   s_hMapFile = CreateFileMapping(
+   s_hMapFile = CreateFileMappingW(
                  INVALID_HANDLE_VALUE,    // use paging file
                  NULL,                    // default security 
                  PAGE_READWRITE,          // read/write access
@@ -39,7 +39,7 @@ ProfilerProgressStatus *PrepareStatusInSharedMemory() {
              GetLastError());
       return 0;
    }
-   s_pBuf = (LPTSTR) MapViewOfFile(s_hMapFile,   // handle to map object
+   s_pBuf = (char *) MapViewOfFile(s_hMapFile,   // handle to map object
                         FILE_MAP_ALL_ACCESS, // read/write permission
                         0,                   
                         0,                   
@@ -76,7 +76,7 @@ public:
         // this assumes that the output is always line buffered
         wxString msg;
         msg << tis.ReadLine();
-        LogMessage(false, msg);
+        LogMessage(false, msg.wc_str());
         hasInput = true;
       }
       if ( IsErrorAvailable() ) {
@@ -84,7 +84,7 @@ public:
           // this assumes that the output is always line buffered
           wxString msg;
           msg << tis.ReadLine();
-          LogMessage(true, msg);
+          LogMessage(true, msg.wc_str());
           hasInput = true;
       }
       return hasInput;
@@ -99,36 +99,36 @@ static wxString s_settingsName;
 
 
 bool SampleWithCommandLineProfiler(ProfilerSettings *settings, unsigned int processId) {
-  char exeFileName[MAX_PATH];
+  wchar_t exeFileName[MAX_PATH];
   GetModuleFileName(0, exeFileName, sizeof(exeFileName));
   wxFileName exeName(exeFileName);
   wxString exeDir = exeName.GetPath(wxPATH_GET_VOLUME|| wxPATH_GET_SEPARATOR);
   DWORD id = GetCurrentProcessId();
-  char buf[2048];
-  sprintf(buf, "%-tmp", id);
+  wchar_t buf[2048];
+  swprintf(buf, _countof(buf), L"%d-tmp", id);
   // save settings to temp file
-  wxString subdir = "cmdline-profiler\\";
-  s_settingsName = exeDir + subdir + wxString(buf) + wxString(".lsp");
-  s_resultsName = exeDir + subdir + wxString(buf) + wxString(".lsd");
+  wxString subdir = L"cmdline-profiler\\";
+  s_settingsName = exeDir + subdir + wxString(buf) + wxString(L".lsp");
+  s_resultsName = exeDir + subdir + wxString(buf) + wxString(L".lsd");
 #ifdef _DEBUG
-  wxString cmdLineProfiler = exeDir + subdir + "cmdline-profiler_D.exe";
+  wxString cmdLineProfiler = exeDir + subdir + L"cmdline-profiler_D.exe";
 #else
-  wxString cmdLineProfiler = exeDir + subdir + "cmdline-profiler.exe";
+  wxString cmdLineProfiler = exeDir + subdir + L"cmdline-profiler.exe";
 #endif
-  _unlink(s_resultsName);
-  _unlink(s_settingsName);
+  _wunlink(s_resultsName.wc_str());
+  _wunlink(s_settingsName.wc_str());
   Sleep(200);
-  if (!settings->SaveAs(s_settingsName.c_str())) {
-    LogMessage(true, "Failed to save settings file [%s] for command line profiler!", s_settingsName.c_str());
+  if (!settings->SaveAs(s_settingsName.wc_str())) {
+    LogMessage(true, L"Failed to save settings file [%s] for command line profiler!", s_settingsName.wc_str());
     return false;
   }
 
-  sprintf(buf, "%s -in \"%s\" -out \"%s\" -shm %s -pid %d", cmdLineProfiler.c_str(), s_settingsName.c_str(), s_resultsName.c_str(), s_sharedMemFileName.c_str(), processId);
+  swprintf(buf, _countof(buf), L"%s -in \"%s\" -out \"%s\" -shm %s -pid %d", cmdLineProfiler.wc_str(), s_settingsName.wc_str(), s_resultsName.wc_str(), s_sharedMemFileName.wc_str(), processId);
   long pid = wxExecute(buf, wxEXEC_ASYNC, &s_process);
   if (pid) {
     s_process.m_bRunning = true;
   } else {
-    LogMessage(true, "Failed to execute command line profiler [%s]!", buf);
+    LogMessage(true, L"Failed to execute command line profiler [%s]!", buf);
   }
   return !!pid;
 }
@@ -151,11 +151,11 @@ bool FinishCmdLineProfiling() {
   Sleep(500);
   bool bRet = true;
   if (!LoadSampleData(s_resultsName)) {
-   LogMessage(true, "Failed to load profile data from command line profiler!");
+   LogMessage(true, L"Failed to load profile data from command line profiler!");
    bRet = false;
   } else {
-    _unlink(s_resultsName);
+    _wunlink(s_resultsName.wc_str());
   }
-  _unlink(s_settingsName);
+  _wunlink(s_settingsName.wc_str());
   return bRet;
 }

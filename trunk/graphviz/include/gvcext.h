@@ -1,18 +1,12 @@
-/* $Id: gvcext.h,v 1.8 2008/05/23 14:34:36 glenlow Exp $ $Revision: 1.8 $ */
-/* vim:set shiftwidth=4 ts=8: */
-
-/**********************************************************
-*      This software is part of the graphviz package      *
-*                http://www.graphviz.org/                 *
-*                                                         *
-*            Copyright (c) 1994-2004 AT&T Corp.           *
-*                and is licensed under the                *
-*            Common Public License, Version 1.0           *
-*                      by AT&T Corp.                      *
-*                                                         *
-*        Information and Software Systems Research        *
-*              AT&T Research, Florham Park NJ             *
-**********************************************************/
+/*************************************************************************
+ * Copyright (c) 2011 AT&T Intellectual Property 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Details at https://graphviz.org
+ *************************************************************************/
 
 /* Common header used by both clients and plugins */
 
@@ -21,11 +15,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef WITH_CODEGENS
-    typedef struct codegen_s codegen_t;
-    typedef struct codegen_info_s codegen_info_t;
 #endif
 
 /*
@@ -61,6 +50,7 @@ extern "C" {
 #undef ELEM
 
     typedef struct GVJ_s GVJ_t;
+    typedef struct GVG_s GVG_t;
     typedef struct GVC_s GVC_t;
 
     typedef struct {
@@ -70,14 +60,35 @@ extern "C" {
 
     typedef struct gvplugin_available_s gvplugin_available_t;
 
-#if defined(GVDLL) && !defined(ENABLE_LTDL)
-    extern lt_symlist_t lt_preloaded_symbols[];
+/*visual studio*/
+#ifdef _WIN32
+#ifndef GVC_EXPORTS
+__declspec(dllimport) lt_symlist_t lt_preloaded_symbols[];
 #else
-    extern const lt_symlist_t lt_preloaded_symbols[];
+//__declspec(dllexport) lt_symlist_t lt_preloaded_symbols[];
+#if !defined(LTDL_H)
+lt_symlist_t lt_preloaded_symbols[];
 #endif
+#endif
+#endif
+/*end visual studio*/
+
+
+#ifndef _WIN32
+#if defined(GVDLL)
+	__declspec(dllexport) lt_symlist_t lt_preloaded_symbols[];
+#else
+#if !defined(LTDL_H)
+	extern lt_symlist_t lt_preloaded_symbols[];
+#endif
+#endif
+#endif
+
 
 #ifdef __cplusplus
 }
 #endif
+
+
 
 #endif

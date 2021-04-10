@@ -33,8 +33,8 @@ public:
 
   enum { SAMPLINGTIME_MANUALCONTROL = -1};
   wxString m_settingsFileName;
-  bool SaveAs(std::string fname);
-  bool Load(std::string fname);
+  bool SaveAs(std::wstring fname);
+  bool Load(std::wstring fname);
   wxString DoAbbreviations(wxString input);
 
   bool operator == (const ProfilerSettings &rhs) {
