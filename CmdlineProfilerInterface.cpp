@@ -8,7 +8,7 @@
 #include <wx/txtstrm.h>
 #include "sampledata.h"
 #include <wx/filename.h>
-
+#include <filesystem>
 
 static  HANDLE s_hMapFile = INVALID_HANDLE_VALUE;
 static char *s_pBuf = 0;
@@ -23,7 +23,7 @@ ProfilerProgressStatus *PrepareStatusInSharedMemory() {
 
   DWORD id = GetCurrentProcessId();
   wchar_t buf[256];
-  swprintf(buf, _countof(buf), L"Global\\LukeStackWalkerStatus-%d", id);
+  swprintf(buf, _countof(buf), L"Local\\LukeStackWalkerStatus-%d", id);
   s_sharedMemFileName = buf;
 
    s_hMapFile = CreateFileMappingW(
@@ -111,11 +111,11 @@ bool SampleWithCommandLineProfiler(ProfilerSettings *settings, unsigned int proc
   s_settingsName = exeDir + subdir + wxString(buf) + wxString(L".lsp");
   s_resultsName = exeDir + subdir + wxString(buf) + wxString(L".lsd");
 #ifdef _DEBUG
-  wxString cmdLineProfiler = exeDir + subdir + L"cmdline-profiler_D.exe";
+  wxString cmdLineProfiler = exeDir + subdir + L"cmdline-profilerD.exe";
 #else
   wxString cmdLineProfiler = exeDir + subdir + L"cmdline-profiler.exe";
 #endif
-  _wunlink(s_resultsName.wc_str());
+  _wunlink(s_resultsName.wc_str()); 
   _wunlink(s_settingsName.wc_str());
   Sleep(200);
   if (!settings->SaveAs(s_settingsName.wc_str())) {
@@ -148,7 +148,13 @@ void CloseSharedMemory() {
 
 
 bool FinishCmdLineProfiling() {
-  Sleep(500);
+  for (int i = 0; i < 10; i++) {
+    std::error_code ec;
+    if (std::filesystem::exists(s_resultsName.wc_str(), ec))
+      break;
+    Sleep(500);
+  }
+
   bool bRet = true;
   if (!LoadSampleData(s_resultsName)) {
    LogMessage(true, L"Failed to load profile data from command line profiler!");

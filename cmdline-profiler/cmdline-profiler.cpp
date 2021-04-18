@@ -7,21 +7,21 @@
 #include "..\profilersettings.h"
 
 
-void LogMessage(bool bError, const char *format, ...) {
-  char buffer[10240];
+void LogMessage(bool bError, const wchar_t *format, ...) {
+  wchar_t buffer[10240];
   va_list args;
   va_start (args, format);
-  vsnprintf_s (buffer, sizeof(buffer), _TRUNCATE, format, args);  
+  _vsnwprintf_s (buffer, _countof(buffer), _TRUNCATE, format, args);  
   va_end (args);  
   if (bError) {    
-    fprintf(stderr, buffer);
-    if (buffer[strlen(buffer)-1] != '\n')
-      fprintf(stderr, "\n");
+    fwprintf(stderr, buffer);
+    if (buffer[wcslen(buffer)-1] != '\n')
+      fwprintf(stderr, L"\n");
       fflush(stderr);
   } else {
-    fprintf(stdout, buffer);
-    if (buffer[strlen(buffer)-1] != '\n')
-      fprintf(stdout, "\n");
+    fwprintf(stdout, buffer);
+    if (buffer[wcslen(buffer)-1] != '\n')
+      fwprintf(stdout, L"\n");
       fflush(stdout);
   }
   
@@ -32,7 +32,7 @@ static HANDLE s_hMapFile = 0;
 static LPCTSTR s_pBuf = 0;
 
 
-ProfilerProgressStatus *OpenSharedMemory(const char *name) {
+ProfilerProgressStatus *OpenSharedMemory(const wchar_t *name) {
        
   s_hMapFile = OpenFileMapping(
                    FILE_MAP_ALL_ACCESS,   // read/write access
@@ -65,10 +65,10 @@ void CloseSharedMemory() {
 }
 
 
-bool Profile(const char *settingsName, const char *resultFileName, const char *sharedMemFile, int pid) {
+bool Profile(const wchar_t *settingsName, const wchar_t *resultFileName, const wchar_t *sharedMemFile, int pid) {
   ProfilerSettings ps;
   if (!ps.Load(settingsName)) {
-    printf("Loading settings file [%s] failed.\n", settingsName);
+    printf("Loading settings file [%S] failed.\n", settingsName);
     return false;
   }
   ProfilerProgressStatus *status;
@@ -83,7 +83,7 @@ bool Profile(const char *settingsName, const char *resultFileName, const char *s
     return false;
   }  
   if (!SaveSampleData(resultFileName)) {
-    printf("Saving sample data to [%s] failed.\n", resultFileName);
+    printf("Saving sample data to [%S] failed.\n", resultFileName);
     status->bFinishedSampling = true;
     return false;
   }
@@ -98,35 +98,35 @@ bool Profile(const char *settingsName, const char *resultFileName, const char *s
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	char *inputfile = 0;
-	char *outputfile = 0;
-  char *sharedMemFile = 0;
+	wchar_t *inputfile = 0;
+	wchar_t *outputfile = 0;
+  wchar_t *sharedMemFile = 0;
   int pid = 0;
 	for (int i = 1; i < argc; i++) {
-		if (!_stricmp(argv[i], "-in")) {
+		if (!_wcsicmp(argv[i], L"-in")) {
 			if (argc > i+1) {
 			  inputfile = argv[i+i];
 			  i++;
 			  continue;
 			}
 		}
-		if (!_stricmp(argv[i], "-out")) {
+		if (!_wcsicmp(argv[i], L"-out")) {
 			if (argc > i+1) {
 			  outputfile = argv[i+1];
 			  i++;
 			  continue;
 			}
 		}
-    if (!_stricmp(argv[i], "-shm")) {
+    if (!_wcsicmp(argv[i], L"-shm")) {
 			if (argc > i+1) {
 			  sharedMemFile = argv[i+1];
 			  i++;
 			  continue;
 			}
 		}
-    if (!_stricmp(argv[i], "-pid")) {
+    if (!_wcsicmp(argv[i], L"-pid")) {
 			if (argc > i+1) {
-			  pid = atoi(argv[i+1]);
+			  pid = _wtoi(argv[i+1]);
 			  i++;
 			  continue;
 			}
