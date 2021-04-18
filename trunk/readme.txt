@@ -1,5 +1,5 @@
 Release 1.0.0, April 22th 2021
-Time to declare the long beta period over and promote Luke Stackwalker version 1.0, thanks t0st! 
+Time to declare the long beta period over and promote Luke Stackwalker version 1.0 - thanks t0st! 
 - ported to visual studio 2019
 - using graphwiz 2.47.0 & wxwidgets 3.14
 - updated dbghelp.dll to latest version from Microsoft
