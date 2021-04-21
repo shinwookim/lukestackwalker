@@ -148,6 +148,15 @@ void CloseSharedMemory() {
 
 
 bool FinishCmdLineProfiling() {
+  wxBusyCursor wait;
+  for (int i = 0; i < 30; i++) {
+    if (!s_process.m_bRunning)
+      break;
+    if (!wxProcess::Exists(s_process.GetPid()))
+      break;
+    HandleCommandLineProfilerOutput();
+    Sleep(500);
+  }
   for (int i = 0; i < 10; i++) {
     std::error_code ec;
     if (std::filesystem::exists(s_resultsName.wc_str(), ec))
