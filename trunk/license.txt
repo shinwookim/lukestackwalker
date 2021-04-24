@@ -1,4 +1,4 @@
-Copyright (c) 2008-2010, Sami Sallinen
+Copyright (c) 2008-2021, Sami Sallinen
 All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -28,13 +28,15 @@ The following third party software is included in this product:
 
 Walking the callstack (http://www.codeproject.com/KB/threads/StackWalker.aspx) - source code (c) 2005-2007 Jochen Kalmbach,\nlicensed under the BSD license
 
-Graphviz library (c) 1994-2004 AT&T Corp, licensed under the Common Public License
+Graphviz library, Copyright (c) 2011 AT&T Intellectual Property, licensed under the Common Public License
 
-WxWidgets library Copyright (c) 1998-2005 Julian Smart, Robert Roebling et al, licensed under the wxWindows Library Licence
+WxWidgets library Copyright (c) 1992-2017 Julian Smart, Vadim Zeitlin, Stefan Csomor, Robert Roebling, and other members of the wxWidgets team.
+
+Portions (c) 1996 Artificial Intelligence Applications Institute
 
 Silk Icons by Mark James http://www.famfamfam.com/lab/icons/silk/, licensed under the Creative Commons Attribution 2.5 License
 
 Microsoft debugging tools for Windows redistributable components, redistributed under 'MICROSOFT SOFTWARE LICENSE TERMS'
 
-Built using Microsoft Visual Studio 2005 Express Edition
+Built using Microsoft Visual Studio 2019 Community
 

@@ -651,8 +651,9 @@ void StackWalkerMainWnd::OnAbout(wxCommandEvent& WXUNUSED(event)) {
     _T("Luke StackWalker version %d.%d.%d - a win32 & x64 profiler (c) 2008-2021 Sami Sallinen\nLicensed under the BSD license\n\n\n")
     _T("Included third party software:\n\n")
     _T("Walking the callstack (http://www.codeproject.com/KB/threads/StackWalker.aspx) - source code (c) 2005-2007 Jochen Kalmbach,\nlicensed under the BSD license\n\n")
-    _T("Graphviz library (c) 1994-2004 AT&T Corp, licensed under the Common Public License\n\n")
-    _T("WxWidgets library Copyright (c) 1998-2017 Julian Smart, Robert Roebling et al, licensed under the wxWindows Library Licence\n\n")
+    _T("Graphviz library Copyright (c) 2011 AT&T Intellectual Property, licensed under the Common Public License\n\n")
+    _T("WxWidgets library Copyright(c) 1992 - 2017 Julian Smart, Vadim Zeitlin, Stefan Csomor, Robert Roebling, and other members of the wxWidgets team.\n"
+      "Portions(c) 1996 Artificial Intelligence Applications Institute\n\n")
     _T("Silk Icons by Mark James http://www.famfamfam.com/lab/icons/silk/, licensed under the Creative Commons Attribution 2.5 License\n\n")
     _T("Microsoft debugging tools for Windows redistributable components, redistributed under 'MICROSOFT SOFTWARE LICENSE TERMS'\n"),
     
@@ -666,7 +667,8 @@ void StackWalkerMainWnd::OnShowManual(wxCommandEvent& WXUNUSED(event)) {
   GetModuleFileName(0, moduleFileName, sizeof(moduleFileName));
   wxString fn = moduleFileName;
   fn = fn.BeforeLast('\\') + wxString(L"\\luke stackwalker manual.pdf");
-  ShellExecute(0, L"open", fn.c_str(), L"", L"", SW_SHOWNORMAL);
+  fn = L"\"" + fn + L"\"";
+  ShellExecute(0, 0, fn.c_str(), 0, 0, SW_SHOW);
 }
 
 void StackWalkerMainWnd::OnRunWizard(wxCommandEvent& WXUNUSED(event)) {

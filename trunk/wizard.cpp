@@ -339,7 +339,7 @@ public:
       mainSizer->AddSpacer(5);
       mainSizer->Add(new wxStaticText(this, wxID_ANY, _T("Environment variables:")), 0, wxALL, 5 );
 
-      m_envVarsLb = new wxListBox(this, Env_Vars_ID, wxDefaultPosition, wxSize(350, 80), 0, 0, wxLB_SORT);
+      m_envVarsLb = new wxListBox(this, Env_Vars_ID, wxDefaultPosition, wxSize(350, 80), 0, 0, 0);
       mainSizer->Add(m_envVarsLb, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5 );
 
       m_currentVariable = new wxTextCtrl(this, wxID_ANY, _T(""), wxDefaultPosition, wxSize(350, wxDefaultCoord));
