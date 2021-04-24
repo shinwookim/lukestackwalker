@@ -24,7 +24,7 @@ CallStackView::CallStackView(wxNotebook *parent, ProfilerSettings *pSettings) :
 {
   m_parent = parent;
   m_bShowSamplesAsSampleCounts = true;
-  m_font = wxFont(8, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Courier New");
+  m_font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Arial");
   wxASSERT(m_font.IsOk());
   m_gvc = gvContext();
   m_fs = 0;
@@ -102,6 +102,8 @@ void CallStackView::DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules) {
         }
       }      
       nodeit->m_graphNode = agnode(m_graph, name, true);
+      agsafeset(nodeit->m_graphNode, "fontsize", "18", "");
+      agsafeset(nodeit->m_graphNode, "fontname", "Arial", "");
       agsafeset(nodeit->m_graphNode, "shape", "box", "");      
   }
   for (auto nodeit = fs->m_callgraph.begin(); 
@@ -166,7 +168,7 @@ void CallStackView::OnDraw(wxDC &dc) {
 
 
 
-  dc.SetFont(*wxNORMAL_FONT);
+  dc.SetFont(m_font);
 
   wxSize windowSize = GetClientSize();
   windowSize.x = windowSize.x / m_zoom;

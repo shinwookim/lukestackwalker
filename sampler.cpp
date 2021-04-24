@@ -532,13 +532,12 @@ void ProduceDisplayData() {
 
 
 PROCESS_INFORMATION LaunchTarget(const wchar_t *exe, const wchar_t*cmdline, const wchar_t*directory, wchar_t*env) {
-  STARTUPINFO si;
+  STARTUPINFOW si;
   PROCESS_INFORMATION pi;
 
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   ZeroMemory( &pi, sizeof(pi) );
-
 
   wxFileName fn(exe);
 
@@ -552,7 +551,7 @@ PROCESS_INFORMATION LaunchTarget(const wchar_t *exe, const wchar_t*cmdline, cons
     NULL,           // Process handle not inheritable
     NULL,           // Thread handle not inheritable
     FALSE,          // Set handle inheritance to FALSE
-    0,              // No creation flags
+    CREATE_UNICODE_ENVIRONMENT,         
     env,           
     directory,          
     &si,            // Pointer to STARTUPINFO structure
@@ -569,8 +568,6 @@ PROCESS_INFORMATION LaunchTarget(const wchar_t *exe, const wchar_t*cmdline, cons
   }
 
   return pi;
-
-
 }
 
 wchar_t *MergeEnvironment(ProfilerSettings *settings) {
@@ -581,7 +578,9 @@ wchar_t *MergeEnvironment(ProfilerSettings *settings) {
     wxString e = env;
     wxString var = e.BeforeFirst('=').MakeUpper();    
     wxString val = e.AfterFirst('=');
-    newEnv[var] = val;
+    if (!var.empty()) {
+      newEnv[var] = val;
+    }
     env += wcslen(env) + 1;
   }
   FreeEnvironmentStrings(envOrg);
