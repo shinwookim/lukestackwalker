@@ -91,6 +91,9 @@ Section "MainSection" SEC01
   File "symsrv.yes"
   File "symsrv.dll"
   File "vcruntime140.dll"
+  File "msvcp140.dll"
+  File "msvcp_win.dll"
+  
   
   
   File "config6"
@@ -106,6 +109,11 @@ Section "MainSection" SEC01
   File "cmdline-profiler\wxbase314u_vc_custom.dll"
   File "cmdline-profiler\zlib1.dll"
   File "cmdline-profiler\vcruntime140.dll"
+  File "cmdline-profiler\vcruntime140_1.dll"
+  File "cmdline-profiler\msvcp140.dll"
+  File "cmdline-profiler\msvcp_win.dll"
+  
+
   
 SectionEnd
 
@@ -194,6 +202,8 @@ Section Uninstall
   Delete "$INSTDIR\symsrv.yes"
   Delete "$INSTDIR\symsrv.dll"
   Delete "$INSTDIR\vcruntime140.dll"
+  Delete "$INSTDIR\msvcp140.dll"
+  Delete "$INSTDIR\msvcp_win.dll"
   Delete "$INSTDIR\config6"
   Delete "$INSTDIR\props.txt"
   Delete "$INSTDIR\bitmaps\lsp.ico"
@@ -207,6 +217,9 @@ Section Uninstall
   Delete "$INSTDIR\cmdline-profiler\cmdline-profiler\wxbase314u_vc_custom.dll"
   Delete "$INSTDIR\cmdline-profiler\cmdline-profiler\zlib1.dll"
   Delete "$INSTDIR\cmdline-profiler\cmdline-profiler\vcruntime140.dll"
+  Delete "$INSTDIR\cmdline-profiler\vcruntime140_1.dll"
+  Delete "$INSTDIR\cmdline-profiler\msvcp140.dll"
+  Delete "$INSTDIR\cmdline-profiler\msvcp_win.dll"
 
 
   Delete "$SMPROGRAMS\Luke Stackwalker\Uninstall.lnk"
