@@ -474,16 +474,47 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
     }
   }
   
+ 
 
   int line = 1;
   long lng = file.Length();
   if (lng > 0) {
+    bool bUnicode = false;
+    bool bByteSwap = false;
+    if (lng >= 2) {
+      char bom[2] = { 0 };
+      file.Read(&bom[0], sizeof(bom));
+      if ((unsigned char)bom[0] == 0xFF && (unsigned char)bom[1] == 0xFE) {
+        bUnicode = true;
+        lng -= 2;
+      }
+      if ((unsigned char)bom[0] == 0xFE && (unsigned char)bom[1] == 0xFF) {
+        bUnicode = true;
+        bByteSwap = true;
+        lng -= 2;
+      }
+    }
     wxString str;
     {
-      std::string buf;
-      buf.resize(lng);
+      std::vector<char> buf;
+      buf.resize(lng+2);
+      if (!bUnicode) {
+        file.Seek(0);
+      }
       file.Read(&buf[0], lng);
-      str = buf;
+      buf[lng] = 0; // wchar 0 (2 bytes)
+      buf[lng+1] = 0;
+      if (bUnicode) {
+        wchar_t* wc = (wchar_t *)&buf[0];
+        if (bByteSwap) {
+          for (int i = 0; i < lng / 2; i++) {
+            wc[i] = ((wc[i] >> 8) & 0xff) | ((wc[i] << 8) & 0xff00);
+          }
+        }
+        str = wc;
+      } else {
+        str = &buf[0];
+      }
     }
     while (str.Len()) {
       wxString lns = str.BeforeFirst('\n');
