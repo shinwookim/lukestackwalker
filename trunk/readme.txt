@@ -4,6 +4,8 @@ Time to declare the long beta period over and promote Luke Stackwalker version 1
 - using graphwiz 2.47.0 & wxwidgets 3.14
 - updated dbghelp.dll to latest version from Microsoft
 - fixed ~10 bugs found by new compiler version
+- support for loading widechar source files
+
 
 
 Release 0.9.9, Dec 22th 2010

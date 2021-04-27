@@ -834,7 +834,10 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   }
 
   m_sourceEdit->GotoLine(caller->m_functionSample->m_maxLine);
-  m_sourceEdit->GotoLine(caller->m_functionSample->m_minLine);  
+  m_sourceEdit->GotoLine(caller->m_functionSample->m_minLine); 
+  if (line >= caller->m_functionSample->m_minLine && line <= caller->m_functionSample->m_maxLine) {
+    m_sourceEdit->GotoLine(line);
+  }
   int start = m_sourceEdit->PositionFromLine(line-1);
   int end = m_sourceEdit->PositionFromLine(line);
   m_sourceEdit->SetSelection(start, end);
