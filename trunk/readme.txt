@@ -1,3 +1,6 @@
+Release 1.0.1, May 1st 2021
+-fix window splitters to work with display scaling, bug report by Jani Kesänen 
+
 Release 1.0.0, April 22th 2021
 Time to declare the long beta period over and promote Luke Stackwalker version 1.0 - thanks t0st! 
 - ported to visual studio 2019
@@ -5,8 +8,6 @@ Time to declare the long beta period over and promote Luke Stackwalker version 1
 - updated dbghelp.dll to latest version from Microsoft
 - fixed ~10 bugs found by new compiler version
 - support for loading widechar source files
-
-
 
 Release 0.9.9, Dec 22th 2010
 - Fix crash when clicking on a call-graph node with source code

@@ -175,7 +175,6 @@ EVT_MENU(File_Save_Settings,      StackWalkerMainWnd::OnFileSaveSettings)
 EVT_MENU(File_Save_Settings_As,   StackWalkerMainWnd::OnFileSaveSettingsAs)
 EVT_MENU(File_Load_Settings,      StackWalkerMainWnd::OnFileLoadSettings)
 EVT_MENU(File_Load_Source,        StackWalkerMainWnd::OnFileLoadSourceFile)
-
 EVT_MENU(Edit_Find_Function,      StackWalkerMainWnd::OnFindFunction)
 
 EVT_MENU(View_Abbreviate,         StackWalkerMainWnd::OnViewAbbreviate)
@@ -205,7 +204,6 @@ EVT_MENU_RANGE(wxID_FILE1, wxID_FILE9, StackWalkerMainWnd::OnMRUFile)
 
 EVT_CLOSE(StackWalkerMainWnd::OnClose)
 
-EVT_SPLITTER_SASH_POS_CHANGING(HorizontalSplitter, StackWalkerMainWnd::OnHorizontalSplitterChanging)  
 
 EVT_FIND(wxID_ANY, StackWalkerMainWnd::OnFindDialog)
 EVT_FIND_NEXT(wxID_ANY, StackWalkerMainWnd::OnFindDialog)
@@ -520,7 +518,7 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   SetClientSize(w, h);
 
 
-  m_vertSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D | wxSP_BORDER);
+  m_vertSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D | wxSP_3DBORDER |  wxSP_LIVE_UPDATE);
 
   m_bottomNotebook = new wxNotebook(m_vertSplitter, wxID_ANY,
     wxDefaultPosition, wxDefaultSize, wxNB_TOP);
@@ -539,7 +537,7 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   m_bottomNotebook->AddPage( m_callstackView , "Callers", false);
 
 
-  m_horzSplitter = new wxSplitterWindow(m_vertSplitter, HorizontalSplitter, wxDefaultPosition, wxDefaultSize, wxSP_3D | wxSP_BORDER);
+  m_horzSplitter = new wxSplitterWindow(m_vertSplitter, HorizontalSplitter, wxDefaultPosition, wxDefaultSize, wxSP_3D | wxSP_3DBORDER | wxSP_LIVE_UPDATE);
   
 
   m_editParent = new EditParent(m_horzSplitter, wxID_ANY);
@@ -1095,12 +1093,12 @@ void StackWalkerMainWnd::RefreshGridView() {
   int size = 0;
   for (int i = 0; i < m_resultsGrid->GetNumberCols(); i++) {
     size += m_resultsGrid->GetColSize(i);  
+    m_resultsGrid->SetColMinimalWidth(i, 50);
   }
   m_gridWidth = size + 16;
   wxSize clientSz = GetClientSize();
 
   int pos = clientSz.GetX() / 2;
-
   wxSize clientSize = m_resultsGrid->GetClientSize();
   wxSize totalSize = m_resultsGrid->GetSize();    
   int extra = totalSize.GetX() - clientSize.GetX();  
@@ -1336,17 +1334,6 @@ void StackWalkerMainWnd::OnFileLoadProfile(wxCommandEvent&) {
 
   LoadProfileData(fdlg.GetPath().c_str());
   UpdateTitleBar();
-}
-
-void StackWalkerMainWnd::OnHorizontalSplitterChanging(wxSplitterEvent& event) {
-  int pos = event.GetSashPosition();
-  int extra = 0;
-  wxSize clientSize = m_resultsGrid->GetClientSize();
-  wxSize totalSize = m_resultsGrid->GetSize();    
-  extra = totalSize.GetX() - clientSize.GetX();  
-  if (pos > m_gridWidth + extra) {
-    event.SetSashPosition(m_gridWidth + extra);
-  }
 }
 
 
