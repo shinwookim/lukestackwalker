@@ -401,7 +401,7 @@ BOOL StackWalker::LoadModules()
   {
    
     // Now first add the (optional) provided sympath:
-    if (m_szSymPath.empty())
+    if (!m_szSymPath.empty())
     {
       szSymPath = m_szSymPath;
       szSymPath += L";";

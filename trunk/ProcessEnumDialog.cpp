@@ -19,6 +19,9 @@ enum {
   ID_ALLITEMS_LB,
 };
 
+
+static wxString s_lastProcessName;
+
 ProcessEnumDialog::ProcessEnumDialog(wxWindow *parent) 
   : wxDialog(parent, wxID_ANY, wxString(_T("Select Process to Profile")))
 
@@ -70,6 +73,12 @@ void ProcessEnumDialog::OnOk(wxCommandEvent& ev) {
   if (str.empty()) {
     return;
   }
+
+  wxString procName = str.AfterFirst(':');
+  procName = procName.AfterFirst(' ');  
+  s_lastProcessName = procName;
+  
+  
   sscanf(str.c_str(), "%x", &m_processId);
   if (m_processId == GetCurrentProcessId()) {
     wxMessageBox(_T("Cannot profile myself.\nYou can profile another copy of Luke Stackwalker, though."),
@@ -92,7 +101,6 @@ void ProcessEnumDialog::RefreshProcesses() {
   bool bSort = m_sortByNameCheckBox->IsChecked();
 
   HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  
   PROCESSENTRY32 pe;
   memset(&pe, 0, sizeof(pe));
   pe.dwSize = sizeof(pe);
@@ -123,6 +131,17 @@ void ProcessEnumDialog::RefreshProcesses() {
     bRet = Process32Next(hSnap, &pe); 
   }
   CloseHandle(hSnap);
+
+  for (unsigned int i = 0; i < m_items->GetCount(); i++) {
+    wxString item = m_items->GetString(i);
+    item = item.AfterFirst(':');
+    item = item.AfterFirst(' ');
+    if (item == s_lastProcessName) {
+      m_items->SetSelection(i);
+      m_items->EnsureVisible(i);
+      break;
+    }
+  }
   
   m_items->Thaw();
 }

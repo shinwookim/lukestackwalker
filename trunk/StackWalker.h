@@ -85,7 +85,7 @@ public:
 	
 
 protected:
-  enum { STACKWALK_MAX_NAMELEN = 1024 }; // max name length for found symbols
+  enum { STACKWALK_MAX_NAMELEN = 4096 }; // max name length for found symbols
   // Entry for each Callstack-Entry
   typedef struct CallstackEntry
   {
