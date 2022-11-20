@@ -1,3 +1,9 @@
+Release 1.0.2, November 20th, 2022
+- fix additional debug info directories from project configuration not being passed to dbghelp.dll
+- fix crash with very long >1k character symbol names (thanks, Qt ;-P)
+- attach to process-dialog remembers the name of the previously profiled program (within one run of luke stackwalker) and pre-selects that
+
+
 Release 1.0.1, May 1st 2021
 -fix window splitters to work with display scaling, bug report by Jani Kesänen 
 

@@ -790,7 +790,7 @@ bool LoadSampleData(const wxString &fn) {
       for (int nc = 0; nc < nCallers; ++nc) {
         Caller c;
         auto func = in.ReadLine();
-        c.m_functionSample = &tsi->m_functionSamples[func];
+        c.m_functionSample = &tsi->m_functionSamples[func.wc_str()];
         in >> c.m_sampleCount;
         in >> c.m_lineNumber;
         c.m_ordinalForSaving = nc;
@@ -835,7 +835,7 @@ bool LoadSampleData(const wxString &fn) {
     // file/line sample counts
     for (int nFile = 0; nFile < nFiles; nFile++) {
       auto name = in.ReadLine();
-      FileLineInfo &fli = tsi->m_lineSamples[name]; 
+      FileLineInfo &fli = tsi->m_lineSamples[name.wc_str()];
       fli.m_fileName = name;
       if (in.ReadWord() != "Lines") {
         return false;
