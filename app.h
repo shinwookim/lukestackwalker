@@ -29,7 +29,7 @@ class MyApp : public wxApp {
 public:
     // override base class virtuals
   ~MyApp();
-    virtual bool OnInit();
+    virtual bool OnInit() override;
 };
 
 class wxTextCtrl;
@@ -127,7 +127,7 @@ public:
     void OnUpdateMenuItemSamplesAsPercentage(wxUpdateUIEvent& event);
     
 
-    virtual void OnClickCaller(Caller *caller);
+    virtual void OnClickCaller(Caller *caller) override;
 
     void ThreadSelectionChanged();
     void LoadSettings(const wchar_t *fileName);

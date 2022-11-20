@@ -382,7 +382,7 @@ public:
     }
 
     void OnRemoveVarClicked(wxCommandEvent& ) {
-      int i = m_envVarsLb->GetSelection();
+      const int i = m_envVarsLb->GetSelection();
       if (i == wxNOT_FOUND)
         return;
       m_envVarsLb->Delete(i);
@@ -390,7 +390,7 @@ public:
     }
 
     void OnItemSelected(wxCommandEvent& ) {
-      int sel = m_envVarsLb->GetSelection();
+      const int sel = m_envVarsLb->GetSelection();
       if (sel == wxNOT_FOUND) {
         return;
       }      

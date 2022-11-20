@@ -52,7 +52,7 @@ wxColour GetGradientEndColorByFraction(const wxColour &sc, const wxColour &ec, d
 }
 
 void LineSampleView::OnDraw(wxPaintDC &dc) {
-  wxSize sz = m_pEdit->GetClientSize();  
+  const wxSize sz = m_pEdit->GetClientSize();  
   
   int x = 0;
   int y = 0;
@@ -71,7 +71,7 @@ void LineSampleView::OnDraw(wxPaintDC &dc) {
   dc.DrawLine(1, 1, 1, sz.y+30);
 
   dc.SetPen(*wxLIGHT_GREY_PEN);
-  int bottom = GetClientSize().y - 1;
+  const int bottom = GetClientSize().y - 1;
   dc.DrawLine(1, bottom, LINESAMPLEWIDTH, bottom);
 
   m_pEdit->ClientToScreen(&x, &y);  
@@ -84,18 +84,18 @@ void LineSampleView::OnDraw(wxPaintDC &dc) {
     dc.DrawRectangle(2, y, LINESAMPLEWIDTH, y+sz.y);
     return;
   }
-  int totalSamples = g_displayedSampleInfo->m_totalSamples - g_displayedSampleInfo->GetIgnoredSamples();  
-  int startLine = m_pEdit->GetFirstVisibleLine();
-  int lh = m_pEdit->TextHeight(startLine);
+  const int totalSamples = g_displayedSampleInfo->m_totalSamples - g_displayedSampleInfo->GetIgnoredSamples();  
+  const int startLine = m_pEdit->GetFirstVisibleLine();
+  const int lh = m_pEdit->TextHeight(startLine);
   for (int l = startLine; y < sz.y; l++) {
     char buf[256];
-    wxRect rectBase(2, y, LINESAMPLEWIDTH, lh);
+    const wxRect rectBase(2, y, LINESAMPLEWIDTH, lh);
     dc.SetBrush(bkBrush);
     dc.DrawRectangle(rectBase);
     if (((int)s_pfli->m_lineSamples.size() > l+1)) {
       if(s_pfli->m_lineSamples[l+1].m_sampleCount) {
         wxRect rectBar(4, y+1, LINESAMPLEWIDTH, lh-4);
-        double perc = (double)s_pfli->m_lineSamples[l+1].m_sampleCount / (s_maxSamplesPerLine?s_maxSamplesPerLine:1);
+        const double perc = (double)s_pfli->m_lineSamples[l+1].m_sampleCount / (s_maxSamplesPerLine?s_maxSamplesPerLine:1);
         rectBar.width = (int)(rectBar.width * perc);
 
         wxColor ec = *wxRED;
@@ -144,7 +144,7 @@ EditParent::EditParent(wxWindow* parent, wxWindowID id, const wxPoint& pos,
 void EditParent::OnPaint(wxPaintEvent&) {
   wxPaintDC dc(this);
   dc.SetFont(m_font);
-  wxSize sz = GetClientSize();  
+  const wxSize sz = GetClientSize();  
   dc.SetPen(*wxLIGHT_GREY_PEN);
   dc.DrawLine(0, 0, 0, EDITHEADERHEIGHT);
   dc.DrawLine(LINESAMPLEWIDTH+2, 0, LINESAMPLEWIDTH+2, EDITHEADERHEIGHT);
@@ -155,7 +155,7 @@ void EditParent::OnPaint(wxPaintEvent&) {
 
   wxString fn = m_edit->GetFilename();
   bool bRemovedChars = false;
-  int maxWidth = sz.x - LINESAMPLEWIDTH - 30;
+  const int maxWidth = sz.x - LINESAMPLEWIDTH - 30;
   do {
     txsz = dc.GetTextExtent(fn);
     if (txsz.GetX() > maxWidth) {
@@ -173,7 +173,7 @@ void EditParent::OnPaint(wxPaintEvent&) {
 }
 
 void EditParent::OnSize(wxSizeEvent &) {
-  wxSize sz = GetClientSize();  
+  const wxSize sz = GetClientSize();  
   m_lineSampleView->SetSize(0, EDITHEADERHEIGHT, LINESAMPLEWIDTH, sz.y-EDITHEADERHEIGHT);
   m_edit->SetSize(LINESAMPLEWIDTH+2, EDITHEADERHEIGHT, sz.x-LINESAMPLEWIDTH, sz.y-EDITHEADERHEIGHT);
   Refresh();
@@ -259,7 +259,7 @@ Edit::~Edit () {}
 //----------------------------------------------------------------------------
 // common event handlers
 void Edit::OnSize( wxSizeEvent& event ) {
-    int x = GetClientSize().x +
+    const int x = GetClientSize().x +
             (g_CommonPrefs.lineNumberEnable? m_LineNrMargin: 0) +
             (g_CommonPrefs.foldEnable? m_FoldingMargin: 0);
     if (x > 0) SetScrollWidth (x);
@@ -429,7 +429,7 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
   Freeze();
   
   if (g_displayedSampleInfo) {
-    auto it =  g_displayedSampleInfo->m_lineSamples.find(filename.wc_str());  
+    const auto it =  g_displayedSampleInfo->m_lineSamples.find(filename.wc_str());  
     if (it != g_displayedSampleInfo->m_lineSamples.end()) {
       s_pfli = &it->second;
     }

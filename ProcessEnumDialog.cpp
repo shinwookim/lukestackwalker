@@ -98,7 +98,7 @@ void ProcessEnumDialog::OnRefresh(wxCommandEvent& ev) {
 void ProcessEnumDialog::RefreshProcesses() {
   m_items->Freeze();
   m_items->Clear();
-  bool bSort = m_sortByNameCheckBox->IsChecked();
+  const bool bSort = m_sortByNameCheckBox->IsChecked();
 
   HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   PROCESSENTRY32 pe;

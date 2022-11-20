@@ -116,7 +116,7 @@ private:
     typedef BOOL (__stdcall *tM32N)(HANDLE hSnapshot, LPMODULEENTRY32W lpme);
 
     // try both dlls...
-    const TCHAR *dllname[] = { _T("kernel32.dll"), _T("tlhelp32.dll") };
+    const TCHAR * const dllname[] = { _T("kernel32.dll"), _T("tlhelp32.dll") };
     HINSTANCE hToolhelp = NULL;
     tCT32S pCT32S = NULL;
     tM32F pM32F = NULL;
@@ -260,7 +260,7 @@ private:
             if (GetFileVersionInfoW(img, dwHandle, dwSize, vData) != 0)
             {
               UINT len;
-              TCHAR szSubBlock[] = _T("\\");
+              const TCHAR szSubBlock[] = _T("\\");
               if (VerQueryValue(vData, szSubBlock, (LPVOID*) &fInfo, &len) == 0)
                 fInfo = NULL;
               else
@@ -722,7 +722,7 @@ BOOL __stdcall StackWalker::myReadProcMem(
   if (s_readMemoryFunction == NULL)
   {
     SIZE_T st;
-    BOOL bRet = ReadProcessMemory(hProcess, (LPVOID) qwBaseAddress, lpBuffer, nSize, &st);
+    const BOOL bRet = ReadProcessMemory(hProcess, (LPVOID) qwBaseAddress, lpBuffer, nSize, &st);
     *lpNumberOfBytesRead = (DWORD) st;
     //printf("ReadMemory: hProcess: %p, baseAddr: %p, buffer: %p, size: %d, read: %d, result: %d\n", hProcess, (LPVOID) qwBaseAddress, lpBuffer, nSize, (DWORD) st, (DWORD) bRet);
     return bRet;

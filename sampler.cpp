@@ -27,11 +27,11 @@ bool g_bNewProfileData = false;
 class MyStackWalker : public StackWalker
 {
 public:
-  FunctionSample *m_prevEntry;
-  FunctionSample *m_firstEntry;
-  Caller *m_prevCaller;
+  FunctionSample *m_prevEntry = nullptr;
+  FunctionSample *m_firstEntry = nullptr;
+  Caller *m_prevCaller = nullptr;
   bool m_bSkipFirstEntry;
-  ThreadSampleInfo *m_currThreadContext;
+  ThreadSampleInfo *m_currThreadContext = nullptr;
   ProfilerProgressStatus *m_status;
   std::set<DWORD64> m_complainedAddresses;
 
@@ -40,7 +40,7 @@ public:
     m_status = status;
   }
 
-  void OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr)
+  void OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr) override
   {
     if (m_complainedAddresses.find(addr) == m_complainedAddresses.end()) {
       m_complainedAddresses.insert(addr);
@@ -161,7 +161,9 @@ public:
           pc->m_callsFromHere.push_back(Call);
           pCallee = &pc->m_callsFromHere.back();
         }
-        pCallee->m_count++;
+        if (pCallee) {
+          pCallee->m_count++;
+        }
         m_prevCaller = pc;
       }
       m_prevEntry = &it->second;
@@ -189,7 +191,7 @@ public:
 };
 
 std::list<FunctionSample *> g_sortedFunctionSamples;
-bool FunctionSamplePredicate (const FunctionSample *lhs, const FunctionSample *rhs) {
+bool FunctionSamplePredicate (const FunctionSample *lhs, const FunctionSample *rhs) noexcept {
   return lhs->m_sampleCount < rhs->m_sampleCount;
 }
 
@@ -323,7 +325,7 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, ti
     }
 
     if (status->bSamplingPaused) {
-      time_t left = end - time(0);
+      const time_t left = end - time(0);
       while (status->bSamplingPaused && !status->bFinishedSampling) {
         Sleep(200);
       }
@@ -342,8 +344,8 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, ti
     }
 
   } while ((time(0) < end) || (duration == ProfilerSettings::SAMPLINGTIME_MANUALCONTROL));
-  time_t sampleend = time(0);
-  double sampleSpeed = (double)status->nSamplesTaken / (sampleend - samplestart);
+  const time_t sampleend = time(0);
+  const double sampleSpeed = (double)status->nSamplesTaken / (sampleend - samplestart);
 
   if (hSnap != INVALID_HANDLE_VALUE)
     CloseHandle(hSnap);
@@ -353,7 +355,7 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, ti
   return sampleSpeed;
 }
 
-void SelectThreadForDisplay(unsigned int threadId, bool bSelect) {
+void SelectThreadForDisplay(unsigned int threadId, bool bSelect) noexcept {
   for (std::map<unsigned int, ThreadSampleInfo>::iterator it = g_threadSamples.begin();
        it != g_threadSamples.end(); it++) {
      if (it->first == threadId) {
@@ -559,7 +561,7 @@ PROCESS_INFORMATION LaunchTarget(const wchar_t *exe, const wchar_t*cmdline, cons
     ) 
   {
     wchar_t errBuffer[2048];
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, 0, GetLastError(), 0, errBuffer, sizeof(errBuffer), 0);
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, 0, GetLastError(), 0, errBuffer, _countof(errBuffer), 0);
     while (wcslen(errBuffer) && (errBuffer[wcslen(errBuffer) - 1] == '\n' || errBuffer[wcslen(errBuffer) - 1] == '\r')) {
       errBuffer[wcslen(errBuffer) - 1] = 0;
     }
@@ -654,7 +656,7 @@ bool SampleProcess(ProfilerSettings *settings, ProfilerProgressStatus *status, u
       debugPaths += L";";
   }
 
-  time_t end = time(0) + settings->m_samplingStartDelay;
+  const time_t end = time(0) + settings->m_samplingStartDelay;
   while ((time(0) < end) || 
     (settings->m_samplingStartDelay == ProfilerSettings::SAMPLINGTIME_MANUALCONTROL)) {
       status->secondsLeftToStart = end - time(0);
@@ -998,7 +1000,7 @@ void CollectCallsFromFunction(const char *name, FunctionSample *output) {
 }
 #endif
 
-int ThreadSampleInfo::GetIgnoredSamples() {
+int ThreadSampleInfo::GetIgnoredSamples() noexcept {
   int ignoredSamples = 0;
   for (std::list<FunctionSample *> ::iterator it = m_sortedFunctionSamples.begin();
        it != m_sortedFunctionSamples.end(); ++it) {

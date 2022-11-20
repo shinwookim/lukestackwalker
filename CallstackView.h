@@ -2,7 +2,7 @@
 #include <wx/scrolwin.h>
 #include <string>
 #include "wx/notebook.h"
-#include "graphviz\include\gvc.h"
+#include <graphviz\gvc.h>
 
 
 struct FunctionSample;
@@ -37,10 +37,10 @@ public:
   void ShowCallstackToFunction(const wchar_t *funcName, bool bSkipPCInUnknownModules);
   void DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules);
   
-  void OnDraw(wxDC &dc);
+  void OnDraw(wxDC &dc) override;
   void OnLeftButtonUp(wxMouseEvent &evt);
   void SetZoom(double zoom);
-  void SetClickCallback(CallStackViewClickCallback *pcb) {m_pcb = pcb;}
-  void SetShowSamplesAsSampleCounts(bool bShowSampleCounts) {m_bShowSamplesAsSampleCounts = bShowSampleCounts;}
+  void SetClickCallback(CallStackViewClickCallback *pcb) noexcept {m_pcb = pcb;}
+  void SetShowSamplesAsSampleCounts(bool bShowSampleCounts) noexcept {m_bShowSamplesAsSampleCounts = bShowSampleCounts;}
   DECLARE_EVENT_TABLE()
 };
