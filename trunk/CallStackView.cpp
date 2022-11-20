@@ -37,7 +37,7 @@ CallStackView::CallStackView(wxNotebook *parent, ProfilerSettings *pSettings) :
          GSTEP = (GEND - GSTART)/NPENS,
          BSTEP = (BEND - BSTART)/NPENS};
   for (int i = 0 ; i < NPENS; i++) {
-    int w = (MAXWIDTH*(i+i))/NPENS;
+    const int w = (MAXWIDTH*(i+i))/NPENS;
     m_pens[i] = new wxPen(wxColour(0, 0, 0), w?w:1, w? wxPENSTYLE_SOLID : wxPENSTYLE_DOT);
     m_brushes[i] = new wxBrush(wxColour(RSTART + RSTEP*i, GSTART + GSTEP*i, BSTART + BSTEP*i));
   }
@@ -72,7 +72,7 @@ void CallStackView::DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules) {
         continue;
       char name[1024];
       
-      int totalSamples = g_displayedSampleInfo->m_totalSamples - g_displayedSampleInfo->GetIgnoredSamples();
+      const int totalSamples = g_displayedSampleInfo->m_totalSamples - g_displayedSampleInfo->GetIgnoredSamples();
 
       if (nodeit == fs->m_callgraph.begin()) {
         char samples[64];
@@ -88,7 +88,7 @@ void CallStackView::DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules) {
         if (m_bShowSamplesAsSampleCounts) {
           sprintf(samples, "%d", nodeit->m_sampleCount);
         } else {
-          double val = (100.0 * (double)(nodeit->m_sampleCount) / totalSamples);
+          const double val = (100.0 * (double)(nodeit->m_sampleCount) / totalSamples);
           sprintf(samples, "%0.1lf%%", val);          
         }
 
@@ -129,7 +129,7 @@ void CallStackView::ShowCallstackToFunction(const wchar_t *funcName, bool bSkipP
   m_fs = 0;
 
   if (g_displayedSampleInfo) {
-    auto fsit = g_displayedSampleInfo->m_functionSamples.find(m_funcName);
+    const auto fsit = g_displayedSampleInfo->m_functionSamples.find(m_funcName);
     if (fsit != g_displayedSampleInfo->m_functionSamples.end()) {
       FunctionSample *fs = &fsit->second;
       DoGraph(fs, bSkipPCInUnknownModules);
@@ -157,7 +157,7 @@ void CallStackView::ShowCallstackToFunction(const wchar_t *funcName, bool bSkipP
     Refresh();
 }
 
-static const  float xscale = 0.76f;
+static constexpr  float xscale = 0.76f;
 
 void CallStackView::OnDraw(wxDC &dc) {
 
@@ -194,10 +194,10 @@ void CallStackView::OnDraw(wxDC &dc) {
           dc.SetPen(*m_pens[nPen]);            
           dc.SetBrush(*m_brushes[nPen]);
           if (edgeit->m_graphEdge && ED_spl(edgeit->m_graphEdge)) {
-            Agedge_t *edge = edgeit->m_graphEdge;
-            auto nSplines = ED_spl(edge)->size;
+            Agedge_t * const edge = edgeit->m_graphEdge;
+            const auto nSplines = ED_spl(edge)->size;
             for (int spl = 0; spl < nSplines; spl++) {
-              int n = ED_spl(edge)->list[spl].size;
+              const int n = ED_spl(edge)->list[spl].size;
               wxPoint* pt = new wxPoint[n];
               for (int i = 0; i < n; i++) {
                 pt[i].x = ED_spl(edge)->list[spl].list[i].x * xscale;
@@ -206,8 +206,8 @@ void CallStackView::OnDraw(wxDC &dc) {
               dc.DrawSpline(n, pt);
 
               if (ED_spl(edge)->list->eflag) {
-                wxPoint ep(ED_spl(edge)->list->ep.x * xscale, ED_spl(edge)->list->ep.y);
-                wxPoint sp = pt[n - 1];
+                const wxPoint ep(ED_spl(edge)->list->ep.x * xscale, ED_spl(edge)->list->ep.y);
+                const wxPoint sp = pt[n - 1];
                 wxPoint delta = sp - ep;
                 int tmp = delta.x;
                 delta.x = delta.y;
@@ -238,7 +238,7 @@ void CallStackView::OnDraw(wxDC &dc) {
       if (!nodeit->m_graphNode)
         continue;
       Agnode_t *node = nodeit->m_graphNode;
-      auto& bb = ND_bb(node);
+      const auto& bb = ND_bb(node);
       dc.DrawRectangle(bb.LL.x*xscale, bb.LL.y,
         (bb.UR.x - bb.LL.x)*xscale,
         bb.UR.y - bb.LL.y);
@@ -246,11 +246,11 @@ void CallStackView::OnDraw(wxDC &dc) {
      
       if (ND_label(node) && ND_label(node)->text) {
         wxString txt = ND_label(node)->text;
-        int x = (bb.UR.x + bb.LL.x)*xscale / 2; // center of ellipse in x
+        const int x = (bb.UR.x + bb.LL.x)*xscale / 2; // center of ellipse in x
         int y = ND_label(node)->pos.y;
         do {           
           wxString str2 = txt.BeforeFirst('\n');
-          wxSize sz = dc.GetTextExtent(str2);
+          const wxSize sz = dc.GetTextExtent(str2);
           int yOffs = sz.y;
           if (nodeit != m_fs->m_callgraph.begin()) {
             yOffs += sz.y / 2;
@@ -271,7 +271,7 @@ void CallStackView::OnLeftButtonUp(wxMouseEvent &evt) {
   wxClientDC dc(this);
   PrepareDC(dc);    
   dc.SetUserScale(m_zoom, m_zoom);
-  wxPoint pt(evt.GetLogicalPosition(dc));
+  const wxPoint pt(evt.GetLogicalPosition(dc));
   if (!m_fs || !m_pcb) {
     return;
   }
@@ -280,8 +280,8 @@ void CallStackView::OnLeftButtonUp(wxMouseEvent &evt) {
       if (!nodeit->m_graphNode)
         continue;
       Agnode_t *node = nodeit->m_graphNode;
-      auto bb = ND_bb(node);
-      wxRect nodeRect(bb.LL.x*xscale, bb.LL.y,
+      const auto bb = ND_bb(node);
+      const wxRect nodeRect(bb.LL.x*xscale, bb.LL.y,
         (bb.UR.x - bb.LL.x)*xscale,
          bb.UR.y - bb.LL.y);
       if (nodeRect.Contains(pt)) {

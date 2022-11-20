@@ -97,7 +97,7 @@ void AbbreviationsDialog::OnOk(wxCommandEvent& ev) {
 }
 
 void AbbreviationsDialog::OnItemSelected(wxCommandEvent& ) {
-  int sel = m_allItems->GetSelection();
+  const int sel = m_allItems->GetSelection();
   if (sel == wxNOT_FOUND) {
     return;
   }
@@ -127,7 +127,7 @@ void AbbreviationsDialog::OnAddButton(wxCommandEvent&) {
 }
 
 void AbbreviationsDialog::OnRemoveButton(wxCommandEvent&) {
-  int sel = m_allItems->GetSelection();
+  const int sel = m_allItems->GetSelection();
   if (sel == wxNOT_FOUND) {
     return;
   }

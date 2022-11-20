@@ -40,8 +40,8 @@ wxColour GetGradientEndColorByFraction(const wxColour &startC, const wxColour &e
 
 
 class LineSampleView : public wxWindow {
-  Edit *m_pEdit;
-  bool m_bShowSamplesAsSampleCounts;
+  Edit *m_pEdit = nullptr;
+  bool m_bShowSamplesAsSampleCounts = true;
 public:
   void SetShowSamplesAsSampleCounts(bool bShowSampleCounts) {m_bShowSamplesAsSampleCounts = bShowSampleCounts; Refresh();}
 	LineSampleView(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxPanelNameStr);	
@@ -59,7 +59,7 @@ public:
 	EditParent(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxPanelNameStr);
 	void OnSize(wxSizeEvent& event);
   void OnPaint(wxPaintEvent& event);
-  Edit *GetEdit() {return m_edit;}
+  Edit *GetEdit() noexcept {return m_edit;}
   
 protected:
 	DECLARE_EVENT_TABLE()
@@ -99,7 +99,7 @@ public:
     wxString DeterminePrefs (const wxString &filename);
     bool InitializePrefs (const wxString &filename);
     bool UserSettings (const wxString &filename);
-    LanguageInfo const* GetLanguageInfo () {return m_language;};
+    LanguageInfo const* GetLanguageInfo () noexcept {return m_language;};
 
     //! load/save file
     bool LoadFile ();
@@ -107,8 +107,8 @@ public:
     wxString GetFilename () {return m_filename;};
     void SetFilename (const wxString &filename) {m_filename = filename;};
     void OnPainted(wxStyledTextEvent &);
-    void SetLineSampleView (LineSampleView *pv) {m_pLineSampleView = pv;}
-    LineSampleView *GetLineSampleView() {return m_pLineSampleView;}
+    void SetLineSampleView (LineSampleView *pv) noexcept {m_pLineSampleView = pv;}
+    LineSampleView *GetLineSampleView() noexcept {return m_pLineSampleView;}
 
 private:
     // file

@@ -31,11 +31,11 @@ public:
     unsigned int m_processId;
 
     void OnCancelButton(wxCommandEvent& event);
-    void OnActionButton(wxCommandEvent& event);
+    void OnActionButton(wxCommandEvent& event) noexcept;
     void OnPauseContinueButton(wxCommandEvent& event);
 
     void OnClose(wxCloseEvent& event);
-    virtual ExitCode Entry();
+    virtual ExitCode Entry() override;
     void OnTimer(wxTimerEvent& evt);
     void EndProfiling();
 
@@ -97,7 +97,7 @@ ProfileProgressDialog::ProfileProgressDialog(wxWindow *parent, ProfilerSettings 
     m_bRunningOn64BitOS = !!b64bitOS;
 }
 
-void ProfileProgressDialog::OnActionButton(wxCommandEvent& WXUNUSED(event)) {
+void ProfileProgressDialog::OnActionButton(wxCommandEvent& WXUNUSED(event)) noexcept {
   if (!m_status->bStartedSampling) {
     m_status->bStartedSampling = true;
     return;
@@ -166,7 +166,7 @@ void ProfileProgressDialog::OnTimer(wxTimerEvent& WXUNUSED(evt)) {
       m_staticText->SetLabel("Press 'start' to begin.");
       m_gauge->Pulse();
     } else {
-      int val = m_status->secondsLeftToStart;
+      const int val = m_status->secondsLeftToStart;
       m_gauge->SetRange(100 * m_settings->m_samplingStartDelay);
       m_gauge->SetValue(100 * val);
       char buf[256];
@@ -204,7 +204,7 @@ void ProfileProgressDialog::OnTimer(wxTimerEvent& WXUNUSED(evt)) {
         if (!m_status->bSamplingPaused)
           m_gauge->Pulse();   
       } else {
-        int val = m_settings->m_samplingTime - m_status->secondsLeftToProfile;
+        const int val = m_settings->m_samplingTime - m_status->secondsLeftToProfile;
         m_gauge->SetRange(100 * m_settings->m_samplingTime);
         m_gauge->SetValue(100 * val);
         char buf[256];
@@ -228,7 +228,7 @@ bool SampleProcessWithDialogProgress(wxWindow *appMainWindow, ProfilerSettings *
   unsigned int processid = 0;
   if (settings->m_bAttachToProcess) {
     ProcessEnumDialog dlg(appMainWindow);
-    int ret = dlg.ShowModal();
+    const int ret = dlg.ShowModal();
     if (ret == wxID_CANCEL) {
       return true;
     }

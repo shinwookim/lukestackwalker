@@ -5,7 +5,7 @@
 #include <limits>
 #include <vector>
 #include "profilersettings.h"
-#include "graphviz\include\gvc.h"
+#include <graphviz\gvc.h>
 
 void LogMessage(bool bError, const wchar_t *format, ...);
 
@@ -15,7 +15,7 @@ struct FunctionSample;
 struct Caller;
 
 struct Call {
-  Call() {
+  Call() noexcept {
     m_target = 0;
     m_count = 0;
     m_graphEdge = 0;
@@ -29,7 +29,7 @@ struct Call {
 
 struct Caller {
   // call graph node
-  Caller() {
+  Caller()  noexcept {
     m_functionSample = 0;
     m_sampleCount = 0;
     m_lineNumber = -1;
@@ -45,7 +45,7 @@ struct Caller {
 };
 
 struct LineInfo {
-  LineInfo() {
+  LineInfo() noexcept {
     m_sampleCount = 0;
   }
   int m_sampleCount;
@@ -90,7 +90,7 @@ struct ThreadSampleInfo {
   unsigned m_lastTickCount;
   bool m_bFirstSample;
   bool m_bSelectedForDisplay;
-  ThreadSampleInfo() {
+  ThreadSampleInfo() noexcept {
     m_totalSamples = 0;
     m_bSelectedForDisplay = false;
     m_kernelTimeStart = 0;
@@ -101,11 +101,11 @@ struct ThreadSampleInfo {
     m_lastTickCount = 0;
     m_bFirstSample = true;
   }
-  int GetRunningTime_ms() {return (int)(m_lastTickCount - m_firstTickCount);}
-  int GetKernelTime_ms() {return (int)((m_kernelTimeEnd - m_kernelTimeStart) / 10000);}
-  int GetUserTime_ms() {return (int)((m_userTimeEnd - m_userTimeStart) / 10000);}
-  int GetCPUTime_ms() {return GetKernelTime_ms() + GetUserTime_ms();}
-  int GetIgnoredSamples();
+  int GetRunningTime_ms() noexcept {return (int)(m_lastTickCount - m_firstTickCount);}
+  int GetKernelTime_ms() noexcept {return (int)((m_kernelTimeEnd - m_kernelTimeStart) / 10000);}
+  int GetUserTime_ms() noexcept  {return (int)((m_userTimeEnd - m_userTimeStart) / 10000);}
+  int GetCPUTime_ms() noexcept {return GetKernelTime_ms() + GetUserTime_ms();}
+  int GetIgnoredSamples() noexcept;
 };
 
 
@@ -117,7 +117,7 @@ extern std::map<unsigned int, ThreadSampleInfo> g_threadSamples;
 
 bool SampleProcess(ProfilerSettings *settings, ProfilerProgressStatus *status, unsigned int processId);
 
-void SelectThreadForDisplay(unsigned int threadId, bool bSelect = true);
+void SelectThreadForDisplay(unsigned int threadId, bool bSelect = true) noexcept;
 void ProduceDisplayData();
 
 extern ThreadSampleInfo *g_displayedSampleInfo;

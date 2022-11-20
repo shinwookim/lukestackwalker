@@ -7,7 +7,7 @@ enum {CURRENT_VERSION = 8};
 
 class ProfilerSettings {
 public:
-  ProfilerSettings() {
+  ProfilerSettings() noexcept {
     m_sampleDepth = 0;
     m_samplingStartDelay = SAMPLINGTIME_MANUALCONTROL;
     m_samplingTime = SAMPLINGTIME_MANUALCONTROL;
@@ -83,7 +83,7 @@ struct ProfilerProgressStatus {
   bool bSamplingPaused;
   bool bFinishedSampling;
   int nSamplesTaken;
-  ProfilerProgressStatus() {
+  ProfilerProgressStatus() noexcept {
     secondsLeftToStart = 0;
     secondsLeftToProfile = 0;
     bStartedSampling = false;

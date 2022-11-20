@@ -130,12 +130,12 @@ public:
     m_bChanged = true;    
   }
 
-  void OnPopup(void) {
+  void OnPopup(void) override {
     m_bChanged = false;
     m_tt->Enable(wxListView::GetItemCount() > 1);
   }
 
-  void OnDismiss(void) {
+  void OnDismiss(void) override {
     if (m_bChanged) {
       SetStringValue(m_combo->GetValue());
       m_owner->ThreadSelectionChanged();
@@ -143,17 +143,17 @@ public:
   }
   
 
-  void SetOwner(StackWalkerMainWnd *newOwner) {
+  void SetOwner(StackWalkerMainWnd *newOwner) noexcept {
     m_owner = newOwner;
   }
 
   void EnableTooltip(bool bEnable) {m_tt->Enable(bEnable);}
 
 protected:
-   bool m_bChanged;
-   bool m_bDismissOnLButtonRelease;
-   StackWalkerMainWnd *m_owner;
-   wxToolTip *m_tt;
+   bool m_bChanged = false;
+   bool m_bDismissOnLButtonRelease = false;
+   StackWalkerMainWnd *m_owner = nullptr;
+   wxToolTip *m_tt = nullptr;
 
 private:
   DECLARE_EVENT_TABLE()
@@ -291,7 +291,7 @@ public:
   }
 
 
-  void OnMouseMove(wxMouseEvent &) {
+  void OnMouseMove(wxMouseEvent &) noexcept {
   }
   
   DECLARE_EVENT_TABLE();
@@ -602,7 +602,7 @@ bool StackWalkerMainWnd::ComplainAboutNonSavedProfile() {
   if (!g_bNewProfileData)
     return false;
   wxMessageDialog dlg(this, _("The profile data has not been saved.\nDo you want to save before continuing?"), _("Note"), wxYES_NO|wxCANCEL);
-  int ret = dlg.ShowModal();
+  const int ret = dlg.ShowModal();
   if (ret == wxID_CANCEL) {
     return true;
   }
@@ -618,7 +618,7 @@ void StackWalkerMainWnd::OnClose(wxCloseEvent &ev) {
     return;
   if (m_settings.m_bChanged) {
     wxMessageDialog dlg(this, _("The project settings have changed.\nDo you want to save them before closing Luke Stackwalker?"), _("Note"), wxYES_NO|wxCANCEL);
-    int ret = dlg.ShowModal();
+    const int ret = dlg.ShowModal();
     if (ret == wxID_CANCEL) {
       ev.Veto();
       return;
@@ -662,7 +662,7 @@ void StackWalkerMainWnd::OnAbout(wxCommandEvent& WXUNUSED(event)) {
 
 void StackWalkerMainWnd::OnShowManual(wxCommandEvent& WXUNUSED(event)) {
   wchar_t moduleFileName[1024] = {0};
-  GetModuleFileName(0, moduleFileName, sizeof(moduleFileName));
+  GetModuleFileName(0, moduleFileName, _countof(moduleFileName)-1);
   wxString fn = moduleFileName;
   fn = fn.BeforeLast('\\') + wxString(L"\\luke stackwalker manual.pdf");
   fn = L"\"" + fn + L"\"";
@@ -818,7 +818,7 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   if (caller->m_functionSample == m_currentActiveFs) {
     int maxSampleCount = 0;
     line = (m_currentActiveFs->m_minLine + m_currentActiveFs->m_maxLine) / 2;
-    auto it =  g_displayedSampleInfo->m_lineSamples.find(caller->m_functionSample->m_fileName.c_str());
+    const auto it =  g_displayedSampleInfo->m_lineSamples.find(caller->m_functionSample->m_fileName.c_str());
 
     if (it != g_displayedSampleInfo->m_lineSamples.end()) {
       FileLineInfo *pfli = &it->second;
@@ -836,8 +836,8 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   if (line >= caller->m_functionSample->m_minLine && line <= caller->m_functionSample->m_maxLine) {
     m_sourceEdit->GotoLine(line);
   }
-  int start = m_sourceEdit->PositionFromLine(line-1);
-  int end = m_sourceEdit->PositionFromLine(line);
+  const int start = m_sourceEdit->PositionFromLine(line-1);
+  const int end = m_sourceEdit->PositionFromLine(line);
   m_sourceEdit->SetSelection(start, end);
   m_sourceEdit->ShowLineNumbers();
   m_sourceEdit->SetReadOnly(true);
@@ -846,7 +846,7 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
 }
 
 void StackWalkerMainWnd::OnGridSelect(wxGridEvent &ev) {
-  int row = ev.GetRow();
+  const int row = ev.GetRow();
   ev.Skip();
 
 
@@ -871,7 +871,7 @@ void StackWalkerMainWnd::OnGridSelect(wxGridEvent &ev) {
     std::multimap<unsigned int, unsigned int> samplesInThreads; 
     // first insert the per-thread sample counts to a multimap to get them sorted by sample count
     for (auto it = g_threadSamples.begin(); it != g_threadSamples.end(); ++it) {
-      auto fsit = it->second.m_functionSamples.find(m_currentActiveFs->m_functionName);
+      const auto fsit = it->second.m_functionSamples.find(m_currentActiveFs->m_functionName);
       if (fsit != it->second.m_functionSamples.end()) {
         samplesInThreads.insert(std::pair<unsigned int, unsigned int>(fsit->second.m_sampleCount, it->first));        
       }
@@ -893,7 +893,7 @@ void StackWalkerMainWnd::OnGridSelect(wxGridEvent &ev) {
 
 
 void StackWalkerMainWnd::OnGridLabelLeftClick(wxGridEvent &ev) {
-  int row = ev.GetRow();
+  const int row = ev.GetRow();
   if (row < 0) {
     return;
   }
@@ -907,13 +907,13 @@ void StackWalkerMainWnd::OnGridLabelLeftClick(wxGridEvent &ev) {
 class ProfilerGridCellRenderer : public wxGridCellStringRenderer {
 public:
   static double m_maxValue;
-  virtual wxGridCellRenderer *Clone() const { 
+  virtual wxGridCellRenderer *Clone() const override { 
     return new ProfilerGridCellRenderer; 
   }
 
   void Draw(wxGrid& grid, wxGridCellAttr& attr,
     wxDC& dc, const wxRect& rectCell,
-    int row, int col, bool isSelected) {
+    int row, int col, bool isSelected) override {
       wxRect rect = rectCell;
       rect.Inflate(-1);
 
@@ -940,8 +940,8 @@ public:
       int overflowCols = 0;
 
       if (attr.GetOverflow()) {
-        int cols = grid.GetNumberCols();
-        int best_width = GetBestSize(grid,attr,dc,row,col).GetWidth();
+        const int cols = grid.GetNumberCols();
+        const int best_width = GetBestSize(grid,attr,dc,row,col).GetWidth();
         int cell_rows, cell_cols;
         attr.GetSize( &cell_rows, &cell_cols ); // shouldn't get here if <= 0
         if ((best_width > rectCell.width) && (col < cols) && grid.GetTable()) {
@@ -1035,7 +1035,7 @@ void StackWalkerMainWnd::RefreshGridView() {
     g_displayedSampleInfo->m_totalSamples = 1;
   // func, samples, file, lines, module
 
-  int ignoredSamples = g_displayedSampleInfo->GetIgnoredSamples();
+  const int ignoredSamples = g_displayedSampleInfo->GetIgnoredSamples();
 
   m_resultsGrid->CreateGrid(g_displayedSampleInfo->m_sortedFunctionSamples.size(), 5);  
   m_resultsGrid->BeginBatch();
@@ -1096,12 +1096,12 @@ void StackWalkerMainWnd::RefreshGridView() {
     m_resultsGrid->SetColMinimalWidth(i, 50);
   }
   m_gridWidth = size + 16;
-  wxSize clientSz = GetClientSize();
+  const wxSize clientSz = GetClientSize();
 
   int pos = clientSz.GetX() / 2;
-  wxSize clientSize = m_resultsGrid->GetClientSize();
-  wxSize totalSize = m_resultsGrid->GetSize();    
-  int extra = totalSize.GetX() - clientSize.GetX();  
+  const wxSize clientSize = m_resultsGrid->GetClientSize();
+  const wxSize totalSize = m_resultsGrid->GetSize();    
+  const int extra = totalSize.GetX() - clientSize.GetX();  
   if (pos > m_gridWidth + extra)
     pos = m_gridWidth + extra;
   m_horzSplitter->SetSashPosition(pos);
@@ -1109,7 +1109,7 @@ void StackWalkerMainWnd::RefreshGridView() {
 
 void StackWalkerMainWnd::ThreadSelectionChanged() {
   for (int i = 0; i < m_toolbarThreadsListPopup->GetItemCount(); ++i) {
-    bool bSelected = !!m_toolbarThreadsListPopup->GetItemState(i, wxLIST_STATE_SELECTED);
+    const bool bSelected = !!m_toolbarThreadsListPopup->GetItemState(i, wxLIST_STATE_SELECTED);
     unsigned int threadId = 0;
     wxString text = m_toolbarThreadsListPopup->GetItemText(i);
     sscanf(text.c_str(), " 0x%X", &threadId);
@@ -1144,7 +1144,7 @@ void StackWalkerMainWnd::ProfileDataChanged() {
   }
 
   for (std::list<std::map<unsigned int, ThreadSampleInfo>::iterator>::iterator listpos = threadsSorted.begin(); listpos != threadsSorted.end(); ++listpos) {  
-    std::map<unsigned int, ThreadSampleInfo>::iterator it = *listpos;
+    const std::map<unsigned int, ThreadSampleInfo>::iterator it = *listpos;
     char buf[256];
     sprintf(buf, "0x%X [%d samples, %d funcs, %0.2lfs CPU time]", it->first, it->second.m_totalSamples, it->second.m_sortedFunctionSamples.size(), it->second.GetCPUTime_ms()/1000.0);
     m_toolbarThreadsListPopup->InsertItem(m_toolbarThreadsListPopup->GetItemCount(), buf);
@@ -1236,10 +1236,10 @@ void StackWalkerMainWnd::OnMaximizeView(wxCommandEvent&) {
       return;
   }
 
-  wxWindow *pFocusWindow = wxWindow::FindFocus();
+  const wxWindow * const pFocusWindow = wxWindow::FindFocus();
   m_verticalSplitterRestorePosition = m_vertSplitter->GetSashPosition();
   m_horizontalSplitterRestorePosition = m_horzSplitter->GetSashPosition();
-  wxPoint sz = GetClientRect().GetBottomRight();  
+  const wxPoint sz = GetClientRect().GetBottomRight();  
 
   if (pFocusWindow == m_sourceEdit || pFocusWindow == m_sourceEdit->GetLineSampleView() ||
       pFocusWindow == m_sourceEdit->GetParent()) {
@@ -1285,7 +1285,7 @@ void StackWalkerMainWnd::OnViewAbbreviate(wxCommandEvent&) {
 void StackWalkerMainWnd::OnViewIgnoreFunction(wxCommandEvent&) {
   if (m_currentActiveFs) {    
     m_currentActiveFs->m_bIgnoredFromDisplay = !m_currentActiveFs->m_bIgnoredFromDisplay;
-    int row = m_resultsGrid->GetGridCursorRow();
+    const int row = m_resultsGrid->GetGridCursorRow();
     RefreshGridView();
     m_resultsGrid->SelectRow(row);  
     m_resultsGrid->SetGridCursor(row, 0);
@@ -1366,11 +1366,11 @@ void StackWalkerMainWnd::OnFindDialog(wxFindDialogEvent& event) {
   if (bInMessageBox)
     return;
   
-  wxEventType type = event.GetEventType();
+  const wxEventType type = event.GetEventType();
   if ( type == wxEVT_COMMAND_FIND || type == wxEVT_COMMAND_FIND_NEXT ) {                             
     wxString findString = event.GetFindString().c_str();
-    bool bDown = !!(event.GetFlags() & wxFR_DOWN);
-    bool bCaseSensitive = !!(event.GetFlags() & wxFR_MATCHCASE);
+    const bool bDown = !!(event.GetFlags() & wxFR_DOWN);
+    const bool bCaseSensitive = !!(event.GetFlags() & wxFR_MATCHCASE);
     int curr = 0;
     wxArrayInt rows = m_resultsGrid->GetSelectedRows();
     if (rows.Count() && rows.Item(0)) {
@@ -1446,7 +1446,7 @@ void LogLineAdded(const std::wstring &msg, bool bError) {
     s_pLogCtrl->SetDefaultStyle(attr);
   }
 
-  int pos = s_pLogCtrl->GetScrollRange(wxVERTICAL);
+  const int pos = s_pLogCtrl->GetScrollRange(wxVERTICAL);
   s_pLogCtrl->SetScrollPos(wxVERTICAL, pos);
   s_pLogCtrl->ScrollLines(1);
 

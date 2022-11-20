@@ -21,7 +21,7 @@ ProfilerProgressStatus *PrepareStatusInSharedMemory() {
     CloseSharedMemory();
   }
 
-  DWORD id = GetCurrentProcessId();
+  const DWORD id = GetCurrentProcessId();
   wchar_t buf[256];
   swprintf(buf, _countof(buf), L"Local\\LukeStackWalkerStatus-%d", id);
   s_sharedMemFileName = buf;
@@ -63,7 +63,7 @@ public:
        m_bRunning = false;
     }
 
-    virtual void OnTerminate(int /*pid*/, int /*status*/) {
+    virtual void OnTerminate(int /*pid*/, int /*status*/) noexcept override {
       m_bRunning = false;
     }
 
@@ -100,10 +100,10 @@ static wxString s_settingsName;
 
 bool SampleWithCommandLineProfiler(ProfilerSettings *settings, unsigned int processId) {
   wchar_t exeFileName[MAX_PATH];
-  GetModuleFileName(0, exeFileName, sizeof(exeFileName));
+  GetModuleFileName(0, exeFileName, _countof(exeFileName));
   wxFileName exeName(exeFileName);
   wxString exeDir = exeName.GetPath(wxPATH_GET_VOLUME|| wxPATH_GET_SEPARATOR);
-  DWORD id = GetCurrentProcessId();
+  const DWORD id = GetCurrentProcessId();
   wchar_t buf[2048];
   swprintf(buf, _countof(buf), L"%d-tmp", id);
   // save settings to temp file
@@ -139,7 +139,7 @@ bool HandleCommandLineProfilerOutput() {
   return s_process.m_bRunning;
 }
 
-void CloseSharedMemory() {
+void CloseSharedMemory() noexcept {
   UnmapViewOfFile(s_pBuf);
   CloseHandle(s_hMapFile);
   s_pBuf = 0;

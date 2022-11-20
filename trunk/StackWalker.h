@@ -117,7 +117,7 @@ protected:
   DWORD m_dwProcessId;
   BOOL m_modulesLoaded;
   std::wstring m_szSymPath;
-  BOOL m_bAbortWhenPCOutsideKnownModules;
+  BOOL m_bAbortWhenPCOutsideKnownModules = false;
 
   int m_options;
 
