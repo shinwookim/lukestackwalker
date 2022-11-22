@@ -5,7 +5,7 @@
 #include <limits>
 #include <vector>
 #include "profilersettings.h"
-#include <graphviz\gvc.h>
+#include "graphviz\gvc.h"
 
 void LogMessage(bool bError, const wchar_t *format, ...);
 
