@@ -646,11 +646,11 @@ void StackWalkerMainWnd::OnAbout(wxCommandEvent& WXUNUSED(event)) {
 
   wchar_t buf[2048];
   swprintf(buf,
-    _T("Luke StackWalker version %d.%d.%d - a win32 & x64 profiler (c) 2008-2021 Sami Sallinen\nLicensed under the BSD license\n\n\n")
+    _T("Luke StackWalker version %d.%d.%d - a win32 & x64 profiler (c) 2008-2022 Sami Sallinen\nLicensed under the BSD license\n\n\n")
     _T("Included third party software:\n\n")
     _T("Walking the callstack (http://www.codeproject.com/KB/threads/StackWalker.aspx) - source code (c) 2005-2007 Jochen Kalmbach,\nlicensed under the BSD license\n\n")
     _T("Graphviz library Copyright (c) 2011 AT&T Intellectual Property, licensed under the Common Public License\n\n")
-    _T("WxWidgets library Copyright(c) 1992 - 2017 Julian Smart, Vadim Zeitlin, Stefan Csomor, Robert Roebling, and other members of the wxWidgets team.\n"
+    _T("WxWidgets library Copyright(c) 1992 - 2020 Julian Smart, Vadim Zeitlin, Stefan Csomor, Robert Roebling, and other members of the wxWidgets team.\n"
       "Portions(c) 1996 Artificial Intelligence Applications Institute\n\n")
     _T("Silk Icons by Mark James http://www.famfamfam.com/lab/icons/silk/, licensed under the Creative Commons Attribution 2.5 License\n\n")
     _T("Microsoft debugging tools for Windows redistributable components, redistributed under 'MICROSOFT SOFTWARE LICENSE TERMS'\n"),
@@ -848,7 +848,8 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
 void StackWalkerMainWnd::OnGridSelect(wxGridEvent &ev) {
   const int row = ev.GetRow();
   ev.Skip();
-
+  if (!g_displayedSampleInfo)
+    return;
 
 
   int r = g_displayedSampleInfo->m_sortedFunctionSamples.size() - 1;
@@ -1019,6 +1020,8 @@ void StackWalkerMainWnd::ClearContext() {
   m_sourceEdit->ClearAll();  
   m_sourceEdit->LoadFile("");
   m_sourceEdit->SetReadOnly(true);
+  m_resultsGrid->SetGridCursor(0, 0);
+  m_resultsGrid->ClearSelection();  
   m_resultsGrid->SetTable(0);
   m_currentActiveFs = 0;
   m_callstackView->ShowCallstackToFunction(L"", true);
@@ -1105,6 +1108,10 @@ void StackWalkerMainWnd::RefreshGridView() {
   if (pos > m_gridWidth + extra)
     pos = m_gridWidth + extra;
   m_horzSplitter->SetSashPosition(pos);
+  if (g_displayedSampleInfo->m_sortedFunctionSamples.size()) {
+    m_resultsGrid->SetGridCursor(0, 0);
+    m_resultsGrid->SelectRow(0);
+  }
 }
 
 void StackWalkerMainWnd::ThreadSelectionChanged() {

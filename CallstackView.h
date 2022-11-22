@@ -2,7 +2,7 @@
 #include <wx/scrolwin.h>
 #include <string>
 #include "wx/notebook.h"
-#include <graphviz\gvc.h>
+#include "graphviz\gvc.h"
 
 
 struct FunctionSample;

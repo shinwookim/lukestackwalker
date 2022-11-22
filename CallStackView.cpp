@@ -1,3 +1,4 @@
+
 #ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -13,12 +14,13 @@
 #include <wx/bitmap.h>
 #include <wx/dcmemory.h>
 
+
 BEGIN_EVENT_TABLE(CallStackView, wxScrolledWindow)
 EVT_LEFT_UP (CallStackView::OnLeftButtonUp)
 END_EVENT_TABLE()
 
 CallStackView::CallStackView(wxNotebook *parent, ProfilerSettings *pSettings) :
-    wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(100, 100),
                      wxHSCROLL | wxVSCROLL | wxNO_FULL_REPAINT_ON_RESIZE),
     m_pSettings(pSettings)  
 {
@@ -65,12 +67,12 @@ void CallStackView::DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules) {
 
   /* Create a simple digraph */
   m_graph = agopen("graph", Agdirected, 0);
+  
 
-  for (std::list<Caller>::iterator nodeit = fs->m_callgraph.begin(); 
-    nodeit != fs->m_callgraph.end(); ++nodeit) {
+  for (std::list<Caller>::iterator nodeit = fs->m_callgraph.begin(); nodeit != fs->m_callgraph.end(); ++nodeit) {
       if (bSkipPCInUnknownModules && !nodeit->m_functionSample->m_moduleName.length())
         continue;
-      char name[1024];
+      char name[1024] = { 0 };
       
       const int totalSamples = g_displayedSampleInfo->m_totalSamples - g_displayedSampleInfo->GetIgnoredSamples();
 
@@ -106,6 +108,8 @@ void CallStackView::DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules) {
       agsafeset(nodeit->m_graphNode, "fontname", "Arial", "");
       agsafeset(nodeit->m_graphNode, "shape", "box", "");      
   }
+
+ 
   for (auto nodeit = fs->m_callgraph.begin(); 
        nodeit != fs->m_callgraph.end(); ++nodeit) {
       if (bSkipPCInUnknownModules && !nodeit->m_functionSample->m_moduleName.length())
@@ -122,12 +126,18 @@ void CallStackView::DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules) {
   gvLayout(m_gvc, m_graph, "dot");
 
   gvRender(m_gvc, m_graph, "dot", 0);
+
+  // the above 2 functions will fail if all the plugin dll's can't be loaded or if config6 file listing the plugings does not exist
+
+
+
 }
 
-void CallStackView::ShowCallstackToFunction(const wchar_t *funcName, bool bSkipPCInUnknownModules) {
+void CallStackView::ShowCallstackToFunction(const wchar_t *funcName, bool bSkipPCInUnknownModules) {  
   m_funcName = funcName;
   m_fs = 0;
 
+  
   if (g_displayedSampleInfo) {
     const auto fsit = g_displayedSampleInfo->m_functionSamples.find(m_funcName);
     if (fsit != g_displayedSampleInfo->m_functionSamples.end()) {
@@ -137,6 +147,7 @@ void CallStackView::ShowCallstackToFunction(const wchar_t *funcName, bool bSkipP
     }
   }
 
+  
   for (int i = 0; i < (int)m_parent->GetPageCount(); i++) {
     if (m_fs && m_parent->GetPage(i) == this) {
       m_parent->ChangeSelection(i);
@@ -152,22 +163,24 @@ void CallStackView::ShowCallstackToFunction(const wchar_t *funcName, bool bSkipP
       m_parent->ChangeSelection(i);      
     }
   }
+  
   Scroll(0, 0);
   if (m_fs)
     Refresh();
+  
 }
 
 static constexpr  float xscale = 0.76f;
 
 void CallStackView::OnDraw(wxDC &dc) {
+  
 
-  if (!m_fs) {
+  if (!m_fs || !m_graph) {
     return;
   }
   dc.SetUserScale(m_zoom, m_zoom);
 
-
-
+  
   dc.SetFont(m_font);
 
   wxSize windowSize = GetClientSize();
@@ -181,7 +194,7 @@ void CallStackView::OnDraw(wxDC &dc) {
   dc.SetPen(*wxWHITE_PEN);
   dc.DrawRectangle(-1, -1, maxPoint.x + 30, maxPoint.y + 30);
 
-
+  
   // draw graph edges
   for (std::list<Caller>::iterator nodeit = m_fs->m_callgraph.begin(); 
     nodeit != m_fs->m_callgraph.end(); ++nodeit) {
@@ -209,7 +222,7 @@ void CallStackView::OnDraw(wxDC &dc) {
                 const wxPoint ep(ED_spl(edge)->list->ep.x * xscale, ED_spl(edge)->list->ep.y);
                 const wxPoint sp = pt[n - 1];
                 wxPoint delta = sp - ep;
-                int tmp = delta.x;
+                const int tmp = delta.x;
                 delta.x = delta.y;
                 delta.y = tmp;
                 delta.x /= -2;
