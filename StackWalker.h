@@ -14,6 +14,8 @@
 
 #include <windows.h>
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 class StackWalkerInternal;  // forward
 class StackWalker
@@ -121,9 +123,9 @@ protected:
 
   int m_options;
 
-  static BOOL __stdcall myReadProcMem(HANDLE hProcess, DWORD64 qwBaseAddress, PVOID lpBuffer, DWORD nSize, LPDWORD lpNumberOfBytesRead);
-
   friend StackWalkerInternal;
+  std::vector<unsigned char> m_symbol_info_buffer;
+  std::unordered_map < std::wstring, std::pair<std::wstring, std::wstring>> m_knownUndecorations;
 };
 
 

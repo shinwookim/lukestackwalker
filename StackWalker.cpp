@@ -568,11 +568,13 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, int maxDepth, const CONTEXT *con
 #error "Platform not supported!"
 #endif
 
-  pSym = (SYMBOL_INFOW *) malloc(sizeof(SYMBOL_INFOW) + 4*STACKWALK_MAX_NAMELEN);
-  if (!pSym) goto cleanup;  // not enough memory...
-  memset(pSym, 0, sizeof(SYMBOL_INFOW) + 2*STACKWALK_MAX_NAMELEN);
+  if (m_symbol_info_buffer.size() < sizeof(SYMBOL_INFOW) + 4 * STACKWALK_MAX_NAMELEN) {
+    m_symbol_info_buffer.resize(sizeof(SYMBOL_INFOW) + 4 * STACKWALK_MAX_NAMELEN);
+  }
+  pSym = (SYMBOL_INFOW *) &m_symbol_info_buffer[0];
+  memset(pSym, 0, sizeof(SYMBOL_INFOW) + 2);
   pSym->SizeOfStruct = sizeof(SYMBOL_INFOW);
-  pSym->MaxNameLen = 2*STACKWALK_MAX_NAMELEN;
+  pSym->MaxNameLen = 2*STACKWALK_MAX_NAMELEN-1;
 
   memset(&Line, 0, sizeof(Line));
   Line.SizeOfStruct = sizeof(Line);
@@ -587,7 +589,7 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, int maxDepth, const CONTEXT *con
     // assume that either you are done, or that the stack is so hosed that the next
     // deeper frame could not be found.
     // CONTEXT need not to be suplied if imageTyp is IMAGE_FILE_MACHINE_I386!
-    if ( !StackWalk64(imageType, this->m_hProcess, hThread, &s, &c, myReadProcMem, SymFunctionTableAccess64, SymGetModuleBase64, NULL) )
+    if ( !StackWalk64(imageType, this->m_hProcess, hThread, &s, &c, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, NULL) )
     {
       this->OnDbgHelpErr("StackWalk64", GetLastError(), s.AddrPC.Offset);
       break;
@@ -615,8 +617,15 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, int maxDepth, const CONTEXT *con
       if (SymFromAddrW(this->m_hProcess, s.AddrPC.Offset, &(csEntry.offsetFromSmybol), pSym) != FALSE)
       {
         wcscpy_s(csEntry.name, pSym->Name);
-        UnDecorateSymbolNameW( pSym->Name, csEntry.undName, STACKWALK_MAX_NAMELEN, UNDNAME_NAME_ONLY );
-        UnDecorateSymbolNameW( pSym->Name, csEntry.undFullName, STACKWALK_MAX_NAMELEN, UNDNAME_COMPLETE );
+        auto it = m_knownUndecorations.find(csEntry.name);
+        if (it == m_knownUndecorations.end()) {
+          UnDecorateSymbolNameW(csEntry.name, csEntry.undName, STACKWALK_MAX_NAMELEN, UNDNAME_NAME_ONLY);
+          UnDecorateSymbolNameW(csEntry.name, csEntry.undFullName, STACKWALK_MAX_NAMELEN, UNDNAME_COMPLETE);
+          m_knownUndecorations[csEntry.name] = std::pair<std::wstring, std::wstring> (csEntry.undName, csEntry.undFullName);
+        } else {
+          wcscpy_s(csEntry.undName, it->second.first.c_str());
+          wcscpy_s(csEntry.undFullName, it->second.second.c_str());
+        }
       }
       else
       {
@@ -702,36 +711,12 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, int maxDepth, const CONTEXT *con
     }   
   } // for ( frameNum )
 
-  cleanup:
-    if (pSym) free( pSym );
-
   if (context == NULL)
     ResumeThread(hThread);
 
   return TRUE;
 }
 
-BOOL __stdcall StackWalker::myReadProcMem(
-    HANDLE      hProcess,
-    DWORD64     qwBaseAddress,
-    PVOID       lpBuffer,
-    DWORD       nSize,
-    LPDWORD     lpNumberOfBytesRead
-    )
-{
-  if (s_readMemoryFunction == NULL)
-  {
-    SIZE_T st;
-    const BOOL bRet = ReadProcessMemory(hProcess, (LPVOID) qwBaseAddress, lpBuffer, nSize, &st);
-    *lpNumberOfBytesRead = (DWORD) st;
-    //printf("ReadMemory: hProcess: %p, baseAddr: %p, buffer: %p, size: %d, read: %d, result: %d\n", hProcess, (LPVOID) qwBaseAddress, lpBuffer, nSize, (DWORD) st, (DWORD) bRet);
-    return bRet;
-  }
-  else
-  {
-    return s_readMemoryFunction(hProcess, qwBaseAddress, lpBuffer, nSize, lpNumberOfBytesRead, s_readMemoryFunction_UserData);
-  }
-}
 
 bool StackWalker::OnLoadModule(LPCWSTR, LPCWSTR, DWORD64, DWORD, DWORD, LPCWSTR, LPCWSTR, ULONGLONG, int, int) {
   return true;
