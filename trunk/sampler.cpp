@@ -210,15 +210,13 @@ void SortFunctionSamples(ThreadSampleInfo *threadInfo) {
 
 
 double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, time_t duration,  ProfilerProgressStatus *status, bool bConnectToServer, bool bAbortWhenOutsideKnownModules) {
-  SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);  
-
+  
   HANDLE hProcess = OpenProcess(
     PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
     FALSE, dwProcessId);
 
   if (hProcess == INVALID_HANDLE_VALUE)
     return 0;
-
 
   // Initialize StackWalker...
   int options = MyStackWalker::OptionsAll;
@@ -240,12 +238,12 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, ti
   std::vector<THREADENTRY32> threads;
   do {
 
-    if ((nLoops % 250) == 249) { // check for new dlls every 1000 samples
+    if ((nLoops % 250) == 249) { // check for new dlls every 250 samples
       sw.LoadModules();
     }
 
 
-    if ((nLoops++ % 20 == 0) || (hSnap == INVALID_HANDLE_VALUE)) { // check for new threads once every 20 samples
+    if (((nLoops++ % 30) == 0) || (hSnap == INVALID_HANDLE_VALUE)) { // check for new threads once every 30 samples
       CloseHandle(hSnap);      
       hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwProcessId);
       if (hSnap == INVALID_HANDLE_VALUE) {
@@ -319,7 +317,11 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, ti
         break;
     }
     
-    Sleep(1);
+    static int n = 0;
+    n++;
+    if ((n & 3) == 0) {
+      Sleep(1);
+    }
     if (!end) { // 1st sample loads symbols; set end time after that...
       end = time(0) + duration;
     }
@@ -351,7 +353,6 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, ti
     CloseHandle(hSnap);
 
   CloseHandle(hProcess);
-  SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
   return sampleSpeed;
 }
 
