@@ -49,6 +49,8 @@ bool ProfilerSettings::SaveAs(std::wstring fname) {
 
   fprintf(f, "abort stack walk if address outside known modules=%d\n", m_bStopAtPCOutsideModules);
 
+  fprintf(f, "symbol server cache path=%s\n", m_symbolServerCachePath.c_str().AsChar());
+
   m_bChanged = false;
   return (fclose(f) == 0);
 }
@@ -156,6 +158,12 @@ bool ProfilerSettings::Load(std::wstring fname) {
     m_bStopAtPCOutsideModules = !!stop;
   } else {
     m_bStopAtPCOutsideModules = true;
+  }
+
+  if (fileVer >= 9) {
+    char path[2048] = { 0 };
+    fscanf(f, "symbol server cache path=%1023[^\n]\n", path);
+    m_symbolServerCachePath = path;
   }
   
 #undef ERR

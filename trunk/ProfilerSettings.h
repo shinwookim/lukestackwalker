@@ -3,11 +3,11 @@
 #include <list>
 #include <map>
 
-enum {CURRENT_VERSION = 8};
+enum {CURRENT_VERSION = 9};
 
 class ProfilerSettings {
 public:
-  ProfilerSettings() noexcept {
+  ProfilerSettings() {
     m_sampleDepth = 0;
     m_samplingStartDelay = SAMPLINGTIME_MANUALCONTROL;
     m_samplingTime = SAMPLINGTIME_MANUALCONTROL;
@@ -15,6 +15,10 @@ public:
     m_bConnectToSymServer = true;
     m_bAttachToProcess = true;
     m_bStopAtPCOutsideModules = true;
+    wxString sysdrv = "c:";
+    const auto env = getenv("SystemDrive");
+    if (env && strlen(env)) sysdrv = env;
+    m_symbolServerCachePath = sysdrv + L"\\websymbols";
   }
   bool m_bAttachToProcess;
   bool m_bChanged;
@@ -23,6 +27,7 @@ public:
   wxString m_commandLineArgs;
   wxString m_currentDirectory;
   std::list<wxString> m_debugInfoPaths;
+  wxString m_symbolServerCachePath;
   int m_sampleDepth;
   int m_samplingStartDelay;
   int m_samplingTime;
@@ -61,6 +66,8 @@ public:
     if (m_environmentVariables != rhs.m_environmentVariables)
       return false;
     if (m_bStopAtPCOutsideModules != rhs.m_bStopAtPCOutsideModules)
+      return false;
+    if (m_symbolServerCachePath != rhs.m_symbolServerCachePath)
       return false;
     return true;
   }

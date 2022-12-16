@@ -8,7 +8,9 @@ enum
     File_Load_Settings,
     File_Save_Profile,
     File_Load_Profile,
-    Edit_Find_Function,    
+    File_Save_CallstackView,
+    Edit_Find_Function,
+    Edit_Copy_Current_Function_Details,
     Profile_Run,
     Zoom_In,
     Zoom_Out,
@@ -69,6 +71,7 @@ class StackWalkerMainWnd : public wxFrame, public CallStackViewClickCallback {
   wxLog *m_logTargetOld;
   wxMenu *m_viewMenu;
   
+  wxString m_currentFunctionModule;
   wxString m_currentFunction;
   wxString m_currentSourceFile;
   wxString m_currentDataFile;
@@ -101,7 +104,9 @@ public:
     void OnFileSaveSettings(wxCommandEvent& event);
     void OnFileSaveSettingsAs(wxCommandEvent& event);
     void OnFileLoadSettings(wxCommandEvent& event);
-    void OnFindFunction(wxCommandEvent& event);    
+    void OnFileSaveCallstackViewAsPNG(wxCommandEvent& event);
+    void OnFindFunction(wxCommandEvent& event);
+    void OnCopyFunctionDetails(wxCommandEvent& event);
 
     void StackWalkerMainWnd::OnProfileRun(wxCommandEvent& event);
     void OnWizardCancel(wxWizardEvent& event);

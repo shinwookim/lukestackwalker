@@ -352,20 +352,24 @@ public:
 };
 
 // #############################################################
-StackWalker::StackWalker(DWORD dwProcessId, HANDLE hProcess, LPCWSTR szSymPath)
+StackWalker::StackWalker(DWORD dwProcessId, HANDLE hProcess, LPCWSTR szSymPath, LPCWSTR szSymServerCachePath)
 {
   m_options = OptionsAll;
   m_modulesLoaded = FALSE;
   m_hProcess = hProcess;
   m_sw = new StackWalkerInternal(this, this->m_hProcess);
   m_dwProcessId = dwProcessId;
+  if (szSymServerCachePath) {
+    m_symbolServerCachePath = szSymServerCachePath;
+  }
   if (szSymPath != NULL)
   {
     m_szSymPath = szSymPath;
     m_options |= SymBuildPath;
   }
 }
-StackWalker::StackWalker(int options, LPCWSTR szSymPath, DWORD dwProcessId, HANDLE hProcess)
+
+StackWalker::StackWalker(int options, LPCWSTR szSymPath, LPCWSTR szSymServerCachePath, DWORD dwProcessId, HANDLE hProcess)
 {
   m_options = options;
   m_modulesLoaded = FALSE;
@@ -376,6 +380,9 @@ StackWalker::StackWalker(int options, LPCWSTR szSymPath, DWORD dwProcessId, HAND
     m_szSymPath = szSymPath;
     m_options |= SymBuildPath;
   } 
+  if (szSymServerCachePath) {
+    m_symbolServerCachePath = szSymServerCachePath;
+  }
 }
 
 StackWalker::~StackWalker() {
@@ -461,24 +468,13 @@ BOOL StackWalker::LoadModules()
     }
 
     if ( (m_options & SymBuildPath) != 0) {
-      if (m_options & SymUseSymSrv) {
-        if (GetEnvironmentVariableW(L"SYSTEMDRIVE", szTemp, nTempLen) > 0) {
-          szTemp[nTempLen-1] = 0;
-          szSymPath+= L"SRV*";
-          szSymPath += szTemp;
-          szSymPath += L"\\websymbols";
-          szSymPath += L"*http://msdl.microsoft.com/download/symbols;";
-        } else {
-          szSymPath += L"SRV*c:\\websymbols*http://msdl.microsoft.com/download/symbols;";
-        }
+      if (m_options & SymUseSymSrv) {        
+        szSymPath+= L"SRV*";        
+        szSymPath += m_symbolServerCachePath;
+        szSymPath += L"*http://msdl.microsoft.com/download/symbols;";        
       } else {
-        if (GetEnvironmentVariableW(L"SYSTEMDRIVE", szTemp, nTempLen) > 0) {
-          szTemp[nTempLen-1] = 0;          
-          szSymPath += szTemp;
-          szSymPath += L"\\websymbols;";
-        } else {
-          szSymPath += L"c:\\websymbols;";
-        }
+        szSymPath += m_symbolServerCachePath;
+        szSymPath += L";";        
       }
     }
   }

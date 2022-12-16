@@ -35,7 +35,8 @@ public:
   ProfilerProgressStatus *m_status;
   std::set<DWORD64> m_complainedAddresses;
 
-  MyStackWalker(int options, DWORD dwProcessId, HANDLE hProcess, LPCWSTR debugInfoPath, ProfilerProgressStatus *status) : StackWalker(options, debugInfoPath, dwProcessId, hProcess) {
+  MyStackWalker(int options, DWORD dwProcessId, HANDLE hProcess, LPCWSTR debugInfoPath, LPCWSTR symbolSereverCachePath,  ProfilerProgressStatus *status) :
+    StackWalker(options, debugInfoPath, symbolSereverCachePath, dwProcessId, hProcess) {
     m_bSkipFirstEntry = false;
     m_status = status;
   }
@@ -209,7 +210,7 @@ void SortFunctionSamples(ThreadSampleInfo *threadInfo) {
 }
 
 
-double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, time_t duration,  ProfilerProgressStatus *status, bool bConnectToServer, bool bAbortWhenOutsideKnownModules) {
+double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, LPCWSTR symbolServerCachePath, int maxDepth, time_t duration,  ProfilerProgressStatus *status, bool bConnectToServer, bool bAbortWhenOutsideKnownModules) {
   
   HANDLE hProcess = OpenProcess(
     PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
@@ -223,7 +224,7 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, int maxDepth, ti
   if (!bConnectToServer) {
     options &= ~MyStackWalker::SymUseSymSrv;
   }
-  MyStackWalker sw(options, dwProcessId, hProcess, debugInfoPath, status);
+  MyStackWalker sw(options, dwProcessId, hProcess, debugInfoPath, symbolServerCachePath, status);
   sw.LoadModules();
   sw.SetAbortAtPCOutsideKnownModules(bAbortWhenOutsideKnownModules);
 
@@ -672,7 +673,7 @@ bool SampleProcess(ProfilerSettings *settings, ProfilerProgressStatus *status, u
   status->secondsLeftToStart = 0;
   double sampleSpeed = 0;
   if (!status->bFinishedSampling) {
-    sampleSpeed = ProfileProcess(pi.dwProcessId, debugPaths.c_str(), settings->m_sampleDepth, settings->m_samplingTime, status, settings->m_bConnectToSymServer, settings->m_bStopAtPCOutsideModules);
+    sampleSpeed = ProfileProcess(pi.dwProcessId, debugPaths.c_str(), settings->m_symbolServerCachePath, settings->m_sampleDepth, settings->m_samplingTime, status, settings->m_bConnectToSymServer, settings->m_bStopAtPCOutsideModules);
   }
   if (!settings->m_bAttachToProcess) {
     TerminateProcess(pi.hProcess, 0);

@@ -172,9 +172,105 @@ void CallStackView::ShowCallstackToFunction(const wchar_t *funcName, bool bSkipP
 
 static constexpr  float xscale = 0.76f;
 
-void CallStackView::OnDraw(wxDC &dc) {
-  
+void CallStackView::SaveAsPng(wxString fileName) {
+  if (!m_fs || !m_graph) {
+    return;
+  }
+  ::wxInitAllImageHandlers();
+  wxSize maxPoint(GD_bb(m_graph).UR.x * xscale, GD_bb(m_graph).UR.y);
+  wxBitmap myBitmap(maxPoint.x, maxPoint.y);
+  wxMemoryDC dc;
+  dc.SelectObject(myBitmap);  
+  dc.SetBackground(*wxWHITE_BRUSH);
+  dc.Clear();
+  DrawGraph(dc);
+  myBitmap.SaveFile(fileName, wxBITMAP_TYPE_PNG);
+}
 
+void CallStackView::DrawGraph(wxDC& dc) {
+  // draw graph edges
+  for (std::list<Caller>::iterator nodeit = m_fs->m_callgraph.begin();
+    nodeit != m_fs->m_callgraph.end(); ++nodeit) {
+    for (std::list<Call>::iterator edgeit = nodeit->m_callsFromHere.begin();
+      edgeit != nodeit->m_callsFromHere.end(); ++edgeit) {
+      int nPen = ((NPENS - 1) * edgeit->m_count) / (m_fs->m_sampleCount ? m_fs->m_sampleCount : 1);
+      if (nPen >= NPENS) {
+        nPen = NPENS - 1;
+      }
+      dc.SetPen(*m_pens[nPen]);
+      dc.SetBrush(*m_brushes[nPen]);
+      if (edgeit->m_graphEdge && ED_spl(edgeit->m_graphEdge)) {
+        Agedge_t* const edge = edgeit->m_graphEdge;
+        const auto nSplines = ED_spl(edge)->size;
+        for (int spl = 0; spl < nSplines; spl++) {
+          const int n = ED_spl(edge)->list[spl].size;
+          wxPoint* pt = new wxPoint[n];
+          for (int i = 0; i < n; i++) {
+            pt[i].x = ED_spl(edge)->list[spl].list[i].x * xscale;
+            pt[i].y = ED_spl(edge)->list[spl].list[i].y;
+          }
+          dc.DrawSpline(n, pt);
+
+          if (ED_spl(edge)->list->eflag) {
+            const wxPoint ep(ED_spl(edge)->list->ep.x * xscale, ED_spl(edge)->list->ep.y);
+            const wxPoint sp = pt[n - 1];
+            wxPoint delta = sp - ep;
+            const int tmp = delta.x;
+            delta.x = delta.y;
+            delta.y = tmp;
+            delta.x /= -2;
+            delta.y /= 2;
+            wxPoint arrow[3];
+            arrow[0] = ep;
+            arrow[1] = sp + delta;
+            arrow[2] = sp - delta;
+            dc.DrawPolygon(3, arrow);
+          }
+          delete[] pt;
+        }
+      }
+    }
+  }
+
+  // draw graph nodes
+  for (std::list<Caller>::iterator nodeit = m_fs->m_callgraph.begin();
+    nodeit != m_fs->m_callgraph.end(); ++nodeit) {
+    int nPen = ((NPENS - 1) * nodeit->m_sampleCount) / (m_fs->m_sampleCount ? m_fs->m_sampleCount : 1);
+    if (nPen >= NPENS) {
+      nPen = NPENS - 1;
+    }
+    dc.SetPen(*wxBLACK_PEN);
+    dc.SetBrush(*m_brushes[nPen]);
+    if (!nodeit->m_graphNode)
+      continue;
+    Agnode_t* node = nodeit->m_graphNode;
+    const auto& bb = ND_bb(node);
+    dc.DrawRectangle(bb.LL.x * xscale, bb.LL.y,
+      (bb.UR.x - bb.LL.x) * xscale,
+      bb.UR.y - bb.LL.y);
+
+
+    if (ND_label(node) && ND_label(node)->text) {
+      wxString txt = ND_label(node)->text;
+      const int x = (bb.UR.x + bb.LL.x) * xscale / 2; // center of ellipse in x
+      int y = ND_label(node)->pos.y;
+      do {
+        wxString str2 = txt.BeforeFirst('\n');
+        const wxSize sz = dc.GetTextExtent(str2);
+        int yOffs = sz.y;
+        if (nodeit != m_fs->m_callgraph.begin()) {
+          yOffs += sz.y / 2;
+        }
+        dc.DrawText(str2, x - sz.x / 2, y - yOffs);
+        y += sz.y;
+        txt = txt.AfterFirst('\n');
+      } while (txt.length());
+    }
+  }
+
+}
+
+void CallStackView::OnDraw(wxDC &dc) {  
   if (!m_fs || !m_graph) {
     return;
   }
@@ -194,86 +290,7 @@ void CallStackView::OnDraw(wxDC &dc) {
   dc.SetPen(*wxWHITE_PEN);
   dc.DrawRectangle(-1, -1, maxPoint.x + 30, maxPoint.y + 30);
 
-  
-  // draw graph edges
-  for (std::list<Caller>::iterator nodeit = m_fs->m_callgraph.begin(); 
-    nodeit != m_fs->m_callgraph.end(); ++nodeit) {
-      for (std::list<Call>::iterator edgeit = nodeit->m_callsFromHere.begin();
-        edgeit != nodeit->m_callsFromHere.end(); ++edgeit) {
-          int nPen = ((NPENS - 1) * edgeit->m_count) / (m_fs->m_sampleCount?m_fs->m_sampleCount:1);
-          if (nPen >= NPENS) {
-            nPen = NPENS - 1;
-          }
-          dc.SetPen(*m_pens[nPen]);            
-          dc.SetBrush(*m_brushes[nPen]);
-          if (edgeit->m_graphEdge && ED_spl(edgeit->m_graphEdge)) {
-            Agedge_t * const edge = edgeit->m_graphEdge;
-            const auto nSplines = ED_spl(edge)->size;
-            for (int spl = 0; spl < nSplines; spl++) {
-              const int n = ED_spl(edge)->list[spl].size;
-              wxPoint* pt = new wxPoint[n];
-              for (int i = 0; i < n; i++) {
-                pt[i].x = ED_spl(edge)->list[spl].list[i].x * xscale;
-                pt[i].y = ED_spl(edge)->list[spl].list[i].y;
-              }
-              dc.DrawSpline(n, pt);
-
-              if (ED_spl(edge)->list->eflag) {
-                const wxPoint ep(ED_spl(edge)->list->ep.x * xscale, ED_spl(edge)->list->ep.y);
-                const wxPoint sp = pt[n - 1];
-                wxPoint delta = sp - ep;
-                const int tmp = delta.x;
-                delta.x = delta.y;
-                delta.y = tmp;
-                delta.x /= -2;
-                delta.y /= 2;
-                wxPoint arrow[3];
-                arrow[0] = ep;
-                arrow[1] = sp + delta;
-                arrow[2] = sp - delta;
-                dc.DrawPolygon(3, arrow);
-              }
-              delete[] pt;
-            }
-          }
-      }
-  }
-  
-  // draw graph nodes
-  for (std::list<Caller>::iterator nodeit = m_fs->m_callgraph.begin(); 
-    nodeit != m_fs->m_callgraph.end(); ++nodeit) {
-      int nPen = ((NPENS - 1)* nodeit->m_sampleCount) / (m_fs->m_sampleCount?m_fs->m_sampleCount:1);
-      if (nPen >= NPENS) {
-        nPen = NPENS - 1;
-      }
-      dc.SetPen(*wxBLACK_PEN);
-      dc.SetBrush(*m_brushes[nPen]);
-      if (!nodeit->m_graphNode)
-        continue;
-      Agnode_t *node = nodeit->m_graphNode;
-      const auto& bb = ND_bb(node);
-      dc.DrawRectangle(bb.LL.x*xscale, bb.LL.y,
-        (bb.UR.x - bb.LL.x)*xscale,
-        bb.UR.y - bb.LL.y);
-
-     
-      if (ND_label(node) && ND_label(node)->text) {
-        wxString txt = ND_label(node)->text;
-        const int x = (bb.UR.x + bb.LL.x)*xscale / 2; // center of ellipse in x
-        int y = ND_label(node)->pos.y;
-        do {           
-          wxString str2 = txt.BeforeFirst('\n');
-          const wxSize sz = dc.GetTextExtent(str2);
-          int yOffs = sz.y;
-          if (nodeit != m_fs->m_callgraph.begin()) {
-            yOffs += sz.y / 2;
-          }
-          dc.DrawText(str2, x - sz.x / 2, y -  yOffs);
-          y += sz.y;
-          txt = txt.AfterFirst('\n');
-        } while (txt.length());
-      }
-  }
+  DrawGraph(dc);
 
 
   SetVirtualSize(maxPoint.x * m_zoom, maxPoint.y * m_zoom);
@@ -298,7 +315,7 @@ void CallStackView::OnLeftButtonUp(wxMouseEvent &evt) {
         (bb.UR.x - bb.LL.x)*xscale,
          bb.UR.y - bb.LL.y);
       if (nodeRect.Contains(pt)) {
-        m_pcb->OnClickCaller(&(*nodeit));
+        m_pcb->OnClickCaller(&(*nodeit));        
       }
   }
 }
