@@ -31,6 +31,7 @@ class CallStackView: public wxScrolledWindow  {
   CallStackViewClickCallback *m_pcb;
   ProfilerSettings *m_pSettings;
   bool m_bShowSamplesAsSampleCounts;
+  void DrawGraph(wxDC& dc);
 public:
   CallStackView( wxNotebook *parent, ProfilerSettings *pSettings );
   ~CallStackView();
@@ -38,6 +39,7 @@ public:
   void DoGraph(FunctionSample *fs, bool bSkipPCInUnknownModules);
   
   void OnDraw(wxDC &dc) override;
+  void SaveAsPng(wxString fileName);
   void OnLeftButtonUp(wxMouseEvent &evt);
   void SetZoom(double zoom);
   void SetClickCallback(CallStackViewClickCallback *pcb) noexcept {m_pcb = pcb;}

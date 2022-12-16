@@ -64,6 +64,7 @@ class ProfilerSettingsSamplingPage : public wxWizardPageSimple {
   wxCheckBox *m_connectToServerCheckBox;
   wxCheckBox *m_stopAtPCOutsideModulesCheckBox;
   wxListBox *m_debugPathsLb;
+  wxDirPickerCtrl* m_symbolServerCachePicker;
   DECLARE_EVENT_TABLE()
 
 public:
@@ -107,8 +108,13 @@ public:
       mainSizer->Add(m_manualSamplingCheckBox, 0, wxALL, 5);
 
       m_connectToServerCheckBox = new wxCheckBox(this, wxID_ANY, "Connect to Microsoft symbol server for system symbols");
-
       mainSizer->Add(m_connectToServerCheckBox, 0, wxALL, 5);      
+
+      mainSizer->Add(new wxStaticText(this, wxID_ANY, "Symbol server cache directory:"), 0, wxTOP | wxLEFT | wxRIGHT, 5);
+      m_symbolServerCachePicker = new wxDirPickerCtrl(this, wxID_ANY, settings->m_symbolServerCachePath, "Symbol server cache directory:", wxDefaultPosition,
+        wxSize(350, 20), wxDIRP_USE_TEXTCTRL);
+
+      mainSizer->Add(m_symbolServerCachePicker, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND | wxALIGN_TOP, 5);
 
       mainSizer->AddSpacer(5);
       mainSizer->Add(new wxStaticText(this, wxID_ANY, _T("Debug info directories:")), 
@@ -142,6 +148,7 @@ public:
         m_settings->m_samplingTime = m_samplingDurationCtrl->GetValue();
       }
       m_settings->m_bConnectToSymServer = m_connectToServerCheckBox->IsChecked();
+      m_settings->m_symbolServerCachePath = m_symbolServerCachePicker->GetDirName().GetFullPath();
       m_settings->m_bStopAtPCOutsideModules = m_stopAtPCOutsideModulesCheckBox->IsChecked();
 
       m_settings->m_debugInfoPaths.clear();      

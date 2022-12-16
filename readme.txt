@@ -1,3 +1,11 @@
+Release 1.0.3, December 15th, 2022
+-Load last used profiler settings when launched, so that your default settings are loaded automatically
+-Exporting the call graph view as a .png image using the File/Save call graph view as .png... menu command
+-Copy selected function (=last clicked in profile or call graph view) info to clipboard as text with Ctrl-c or the Edit/Copy command
+-Allow configuring the symbol server cache directory in the profiler settings wizard step 2
+-Make also the last profiled binary name remembered persistently
+-Performance optimization in profiling,boost sampling speed a little
+
 Release 1.0.2, November 20th, 2022
 - fix additional debug info directories from project configuration not being passed to dbghelp.dll
 - fix crash with very long >1k character symbol names (thanks, Qt ;-P)

@@ -37,6 +37,12 @@
 #include <wx/settings.h>
 #include <wx/stattext.h>
 
+#include <wx/stdpaths.h>
+#include <wx/config.h>
+#include <wx/confbase.h>
+#include <wx/fileconf.h>
+#include <wx/clipbrd.h>
+
 
 static wxTextCtrl *s_pLogCtrl = 0;
 
@@ -167,15 +173,18 @@ END_EVENT_TABLE()
 
 
 BEGIN_EVENT_TABLE(StackWalkerMainWnd, wxFrame)
-EVT_MENU(Wizard_Quit,             StackWalkerMainWnd::OnQuit)
-EVT_MENU(Wizard_About,            StackWalkerMainWnd::OnAbout)
-EVT_MENU(Help_ShowManual,            StackWalkerMainWnd::OnShowManual)
-EVT_MENU(Wizard_RunModal,         StackWalkerMainWnd::OnRunWizard)
-EVT_MENU(File_Save_Settings,      StackWalkerMainWnd::OnFileSaveSettings)
-EVT_MENU(File_Save_Settings_As,   StackWalkerMainWnd::OnFileSaveSettingsAs)
-EVT_MENU(File_Load_Settings,      StackWalkerMainWnd::OnFileLoadSettings)
-EVT_MENU(File_Load_Source,        StackWalkerMainWnd::OnFileLoadSourceFile)
-EVT_MENU(Edit_Find_Function,      StackWalkerMainWnd::OnFindFunction)
+EVT_MENU(Wizard_Quit, StackWalkerMainWnd::OnQuit)
+EVT_MENU(Wizard_About, StackWalkerMainWnd::OnAbout)
+EVT_MENU(Help_ShowManual, StackWalkerMainWnd::OnShowManual)
+EVT_MENU(Wizard_RunModal, StackWalkerMainWnd::OnRunWizard)
+EVT_MENU(File_Save_Settings, StackWalkerMainWnd::OnFileSaveSettings)
+EVT_MENU(File_Save_Settings_As, StackWalkerMainWnd::OnFileSaveSettingsAs)
+EVT_MENU(File_Load_Settings, StackWalkerMainWnd::OnFileLoadSettings)
+EVT_MENU(File_Load_Source, StackWalkerMainWnd::OnFileLoadSourceFile)
+EVT_MENU(File_Save_CallstackView, StackWalkerMainWnd::OnFileSaveCallstackViewAsPNG)
+
+EVT_MENU(Edit_Find_Function, StackWalkerMainWnd::OnFindFunction)
+EVT_MENU(Edit_Copy_Current_Function_Details, StackWalkerMainWnd::OnCopyFunctionDetails)
 
 EVT_MENU(View_Abbreviate,         StackWalkerMainWnd::OnViewAbbreviate)
 EVT_MENU(Profile_Run,             StackWalkerMainWnd::OnProfileRun)
@@ -388,12 +397,15 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   menuFile->Append(File_Save_Profile, _T("Save Profile Data..."), _T("Save profile data to a file."));
   menuFile->Append(File_Load_Profile, _T("Load Profile Data..."), _T("Load previously saved profile data from a file."));
   menuFile->AppendSeparator();
+  menuFile->Append(File_Save_CallstackView, _T("Save call graph view as .png ..."), _T("Save the current callstack view as a .png image."));
+  menuFile->AppendSeparator();
   menuFile->Append(Wizard_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
   m_fileHistory.UseMenu(menuFile);
   m_fileHistory.AddFilesToMenu();
 
   wxMenu *menuEdit = new wxMenu;
   menuEdit->Append(Edit_Find_Function, "&Find\tCtrl-F", "Find a function in the profile.");
+  menuEdit->Append(Edit_Copy_Current_Function_Details, "&Copy function details\tCtrl-C", "Copy selected function name, module and source file name to clipboard.");
   
   
 
@@ -572,6 +584,12 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   m_bWievSamplesAsSampleCounts = !!wxConfigBase::Get()->Read(_T("showSampleCounts"), (long)0);
   m_sourceEdit->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
   m_callstackView->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
+
+  auto file = wxConfigBase::Get()->Read(_T("lastSettingsFile"), "");
+  if (wxFileExists(file)) {
+    LoadSettings(file);
+  }
+
 }
 
 StackWalkerMainWnd::~StackWalkerMainWnd() {
@@ -593,8 +611,7 @@ StackWalkerMainWnd::~StackWalkerMainWnd() {
   m_fileHistory.Save(*wxConfigBase::Get());
 
   delete wxLog::SetActiveTarget( m_logTargetOld  );
-  wxLog::SetLogLevel(0);
-  
+  wxLog::SetLogLevel(0);  
 }
 
 
@@ -625,7 +642,7 @@ void StackWalkerMainWnd::OnClose(wxCloseEvent &ev) {
     }
     if (ret == wxID_YES) {
       wxCommandEvent ev2;
-      OnFileSaveSettingsAs(ev2);
+      OnFileSaveSettings(ev2);
       return;
     }
   }
@@ -717,6 +734,21 @@ void StackWalkerMainWnd::UpdateTitleBar() {
   SetLabel(label);
 }
 
+void StackWalkerMainWnd::OnFileSaveCallstackViewAsPNG(wxCommandEvent&) {
+  wxFileDialog fdlg(this, "Save callstack as:",
+    "", "", "Portable network graphics (*.PNG)|*.PNG", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+  if (fdlg.ShowModal() == wxID_CANCEL)
+    return;
+  m_callstackView->SaveAsPng(fdlg.GetPath());
+}
+
+void StackWalkerMainWnd::OnCopyFunctionDetails(wxCommandEvent&) {
+  if (!wxTheClipboard->Open()) {
+    return;
+  }
+  wxTheClipboard->SetData(new wxTextDataObject(m_currentFunctionModule + " " + m_currentSourceFile + " " + m_currentFunction));
+  wxTheClipboard->Close();  
+}
 
 void StackWalkerMainWnd::OnFileSaveSettings(wxCommandEvent& ev) {
   if (!m_settings.m_settingsFileName.Length()) {
@@ -739,9 +771,10 @@ void StackWalkerMainWnd::OnFileSaveSettingsAs(wxCommandEvent& WXUNUSED(event)) {
   if (!m_settings.SaveAs(fdlg.GetPath().wc_str())) {
     wxMessageBox(wxT("Saving the settings failed."), wxT("Notification"));
   } else {
-    m_fileHistory.AddFileToHistory(fdlg.GetPath());
+    m_fileHistory.AddFileToHistory(fdlg.GetPath());    
   }
   m_settings.m_settingsFileName = fdlg.GetPath();  
+  wxConfigBase::Get()->Write(_T("lastSettingsFile"), m_settings.m_settingsFileName);
   UpdateTitleBar();
 }
 
@@ -760,6 +793,7 @@ void StackWalkerMainWnd::LoadSettings(const wchar_t *fileName) {
     m_settings.m_settingsFileName = fileName;  
     m_fileHistory.AddFileToHistory(fileName);
   }
+  wxConfigBase::Get()->Write(_T("lastSettingsFile"), m_settings.m_settingsFileName);
   ClearContext();
   ProfileDataChanged();
   UpdateTitleBar();
@@ -814,6 +848,7 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   int line = caller->m_lineNumber;
 
   m_currentFunction = caller->m_functionSample->m_functionName;
+  m_currentFunctionModule = caller->m_functionSample->m_moduleName;
 
   if (caller->m_functionSample == m_currentActiveFs) {
     int maxSampleCount = 0;

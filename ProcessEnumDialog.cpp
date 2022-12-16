@@ -9,6 +9,9 @@
 #include <wx/checkbox.h>
 
 #include "ProcessEnumDialog.h"
+#include <wx/config.h>
+#include <wx/confbase.h>
+
 
 #include <Tlhelp32.h>
 #include <wx/msgdlg.h>
@@ -20,7 +23,7 @@ enum {
 };
 
 
-static wxString s_lastProcessName;
+
 
 ProcessEnumDialog::ProcessEnumDialog(wxWindow *parent) 
   : wxDialog(parent, wxID_ANY, wxString(_T("Select Process to Profile")))
@@ -76,7 +79,7 @@ void ProcessEnumDialog::OnOk(wxCommandEvent& ev) {
 
   wxString procName = str.AfterFirst(':');
   procName = procName.AfterFirst(' ');  
-  s_lastProcessName = procName;
+  wxConfigBase::Get()->Write(_T("LastProcessName"), procName);  
   
   
   sscanf(str.c_str(), "%x", &m_processId);
@@ -131,12 +134,12 @@ void ProcessEnumDialog::RefreshProcesses() {
     bRet = Process32Next(hSnap, &pe); 
   }
   CloseHandle(hSnap);
-
+  auto procName = wxConfigBase::Get()->Read(_T("LastProcessName"), "");
   for (unsigned int i = 0; i < m_items->GetCount(); i++) {
     wxString item = m_items->GetString(i);
     item = item.AfterFirst(':');
     item = item.AfterFirst(' ');
-    if (item == s_lastProcessName) {
+    if (item == procName) {
       m_items->SetSelection(i);
       m_items->EnsureVisible(i);
       break;

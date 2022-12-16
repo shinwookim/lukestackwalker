@@ -58,10 +58,11 @@ public:
   StackWalker(
     int options = OptionsAll, // 'int' is by design, to combine the enum-flags
     LPCWSTR szSymPath = NULL, 
+    LPCWSTR szSymServerCachePath = NULL,
     DWORD dwProcessId = GetCurrentProcessId(), 
     HANDLE hProcess = GetCurrentProcess()
     );
-  StackWalker(DWORD dwProcessId, HANDLE hProcess, LPCWSTR szSymPath = NULL);
+  StackWalker(DWORD dwProcessId, HANDLE hProcess, LPCWSTR szSymPath = NULL, LPCWSTR szSymServerCachePath = NULL);
   virtual ~StackWalker();
 
   typedef BOOL (__stdcall *PReadProcessMemoryRoutine)(
@@ -119,6 +120,7 @@ protected:
   DWORD m_dwProcessId;
   BOOL m_modulesLoaded;
   std::wstring m_szSymPath;
+  std::wstring m_symbolServerCachePath;
   BOOL m_bAbortWhenPCOutsideKnownModules = false;
 
   int m_options;
