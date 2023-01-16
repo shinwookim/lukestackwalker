@@ -1,3 +1,6 @@
+Release 1.0.4, January 16th, 2023
+-Source code view auto-adapts between unix,mac and windows style line endings
+
 Release 1.0.3, December 15th, 2022
 -Load last used profiler settings when launched, so that your default settings are loaded automatically
 -Exporting the call graph view as a .png image using the File/Save call graph view as .png... menu command
