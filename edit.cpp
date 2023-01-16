@@ -516,7 +516,15 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
         str = &buf[0];
       }
     }
-    while (str.Len()) {
+    if (str.find(L"\r\n") == std::string::npos) { 
+      // no dos-stype line endings found
+      if (str.find(L"\n") != std::string::npos) {
+        str.Replace(L"\n", L"\r\n"); // convert line endings linux->dos 
+      } else {
+        str.Replace(L"\r", L"\r\n"); // convert line endings mac->dos 
+      }
+    }
+    while (str.Len()) {      
       wxString lns = str.BeforeFirst('\n');
       int right = str.Len() - lns.Len() - 1;
       if (right < 0)
