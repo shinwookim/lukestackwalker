@@ -1,3 +1,10 @@
+Release 1.0.5 January 22nd, 2023
+-better multi-format EOL support (can now handle cr+lf,cr and lf all in the same file)
+-detection of UTF-8 BOM and separate loading path for UTF-8 encoded files
+-tested / fixed loading of japanese characters in shift-JIS encoding
+-restore compiler optimizations in the GUI and 32-bit profiler -> faster sampling (they were never removerd from the x64 profiler)
+-add visual studio 2022 project file to version control
+
 Release 1.0.4, January 16th, 2023
 -Source code view auto-adapts between unix,mac and windows style line endings
 
