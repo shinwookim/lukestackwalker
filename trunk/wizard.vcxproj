@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4D68279E-5BA4-4CA0-BD1B-E8CD4A43BCFB}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>16.0.30804.86</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)\</OutDir>
+    <IntDir>.\vc_msw\wizard\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <TargetName>luke_sw</TargetName>
+    <IncludePath>.;graphviz;$(IncludePath)</IncludePath>
+    <LibraryPath>graphviz;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)\debug_binaries\</OutDir>
+    <IntDir>.\vc_mswd\wizard\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetName>luke_sw_d</TargetName>
+    <IncludePath>graphviz;.;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <VcpkgConfiguration>Debug</VcpkgConfiguration>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\vc_msw/wizard.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/EHsc /FItargetsxs.h
+ %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>graphviz\include\graphviz;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_NDEBUG;__WXMSW__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=_WIN32_WINNT_WIN7;GVDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>.\vc_msw\wizard/wizard.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\vc_msw\wizard/</AssemblerListingLocation>
+      <ObjectFileName>.\vc_msw\wizard/</ObjectFileName>
+      <ProgramDataBaseFileName>vc_msw\wizard.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>C:\wxWidgets-2.8.10\lib\vc_lib\mswd;C:\wxWidgets-2.8.10\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>wxmsw32u_stc.lib;wxmsw32u_adv.lib;wxmsw32u_html.lib;wxbase32u_xml.lib;wxmsw32u_core.lib;wxbase32u.lib;tiff.lib;jpeg.lib;libpng16.lib;zlib.lib;libexpat.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gvc.lib;cdt.lib;dbghelp.lib;psapi.lib;cgraph.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\vc_msw/wizard.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\vc_msw/wizard.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\vc_mswd/wizard.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/EHsc  /FItargetsxs.h %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>graphviz\include\graphviz;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=_WIN32_WINNT_WINXP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>.\vc_mswd\wizard/wizard.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\vc_mswd\wizard/</AssemblerListingLocation>
+      <ObjectFileName>.\vc_mswd\wizard/</ObjectFileName>
+      <ProgramDataBaseFileName>vc_mswd\wizard.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>C:\wxWidgets-2.8.10\lib\vc_lib\mswd;C:\wxWidgets-2.8.10\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>wxmsw32ud_stc.lib;wxmsw32ud_adv.lib;wxmsw32ud_html.lib;wxbase32ud_xml.lib;wxmsw32ud_core.lib;wxbase32ud.lib;tiffd.lib;jpeg.lib;libpng16d.lib;zlibd.lib;libexpatd.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;kernel32.lib;psapi.lib;gvc.lib;cdt.lib;cgraph.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\vc_mswd/wizard.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\vc_mswd/wizard.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="abbreviationsDialog.cpp" />
+    <ClCompile Include="app.cpp" />
+    <ClCompile Include="CallStackView.cpp">
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpp14</LanguageStandard>
+    </ClCompile>
+    <ClCompile Include="CmdlineProfilerInterface.cpp" />
+    <ClCompile Include="edit.cpp" />
+    <ClCompile Include="prefs.cpp" />
+    <ClCompile Include="ProcessEnumDialog.cpp" />
+    <ClCompile Include="profileprogress.cpp" />
+    <ClCompile Include="profilersettings.cpp" />
+    <ClCompile Include="sampler.cpp" />
+    <ClCompile Include="StackWalker.cpp" />
+    <ClCompile Include="wizard.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="wizard.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bitmaps\appicon.ico" />
+    <Image Include="bitmaps\open.bmp" />
+    <Image Include="bitmaps\run.bmp" />
+    <Image Include="bitmaps\save-profile.bmp" />
+    <Image Include="bitmaps\save-settings.bmp" />
+    <Image Include="bitmaps\save.bmp" />
+    <Image Include="bitmaps\settings.bmp" />
+    <Image Include="bitmaps\zoom_in.bmp" />
+    <Image Include="bitmaps\zoom_out.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="abbreviationsDialog.h" />
+    <ClInclude Include="app.h" />
+    <ClInclude Include="CallstackView.h" />
+    <ClInclude Include="CmdlineProfilerInterface.h" />
+    <ClInclude Include="edit.h" />
+    <ClInclude Include="lukesw-version.h" />
+    <ClInclude Include="prefs.h" />
+    <ClInclude Include="ProcessEnumDialog.h" />
+    <ClInclude Include="profileprogress.h" />
+    <ClInclude Include="ProfilerSettings.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="sampledata.h" />
+    <ClInclude Include="StackWalker.h" />
+    <ClInclude Include="targetsxs.h" />
+    <ClInclude Include="wizard.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="license.txt" />
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

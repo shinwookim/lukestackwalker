@@ -27,6 +27,8 @@
 #include "edit.h"        // edit module
 #include "sampledata.h"
 
+#pragma optimize("", off)
+
 //----------------------------------------------------------------------------
 // LineSampleView
 //----------------------------------------------------------------------------
@@ -480,9 +482,10 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
   long lng = file.Length();
   if (lng > 0) {
     bool bUnicode = false;
+    bool bUtf8WBom = false;
     bool bByteSwap = false;
     if (lng >= 2) {
-      char bom[2] = { 0 };
+      char bom[3] = { 0 };
       file.Read(&bom[0], sizeof(bom));
       if ((unsigned char)bom[0] == 0xFF && (unsigned char)bom[1] == 0xFE) {
         bUnicode = true;
@@ -493,13 +496,21 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
         bByteSwap = true;
         lng -= 2;
       }
+      if ((unsigned char)bom[0] == 0xEF && (unsigned char)bom[1] == 0xBB && (unsigned char)bom[2] == 0xBF) {
+        bUtf8WBom = true;
+        lng -= 3;
+      }
     }
     wxString str;
     {
       std::vector<char> buf;
       buf.resize(lng+2);
-      if (!bUnicode) {
+      if (!bUnicode && !bUtf8WBom) {
         file.Seek(0);
+      } else if (bUnicode) {
+        file.Seek(2);
+      } else if (bUtf8WBom) {
+        // no seek necessary, we already read 3 bytes
       }
       file.Read(&buf[0], lng);
       buf[lng] = 0; // wchar 0 (2 bytes)
@@ -513,29 +524,20 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
         }
         str = wc;
       } else {
-        str = &buf[0];
+        if (bUtf8WBom) {
+          str = wxString::FromUTF8(&buf[0]); // converts from current code page
+        } else {
+          str = wxString(&buf[0]); // converts from current code page
+        }
       }
-    }
-    if (str.find(L"\r\n") == std::string::npos) { 
-      // no dos-stype line endings found
-      if (str.find(L"\n") != std::string::npos) {
-        str.Replace(L"\n", L"\r\n"); // convert line endings linux->dos 
-      } else {
-        str.Replace(L"\r", L"\r\n"); // convert line endings mac->dos 
-      }
-    }
-    while (str.Len()) {      
-      wxString lns = str.BeforeFirst('\n');
-      int right = str.Len() - lns.Len() - 1;
-      if (right < 0)
-        right = 0;
-      str = str.Right(right);    
-      InsertText (GetTextLength(), lns);
-      line++;
-    }
+    } 
+
+    InsertText(0, str);
   }
   file.Close();
-
+  ConvertEOLs(wxSTC_EOL_CRLF);
+  SetEOLMode(wxSTC_EOL_CRLF);  
+  line = GetLineCount();
   wxString margin = "__";
   while (line / 10) {
     margin += "9";
