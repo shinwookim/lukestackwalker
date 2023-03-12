@@ -1,3 +1,6 @@
+Release 1.0.6 March 12th, 2023
+-ctrl-c copies selected function details OR source edit control selection, if something is selected and the edit control has focus
+
 Release 1.0.5 January 22nd, 2023
 -better multi-format EOL support (can now handle cr+lf,cr and lf all in the same file)
 -detection of UTF-8 BOM and separate loading path for UTF-8 encoded files
