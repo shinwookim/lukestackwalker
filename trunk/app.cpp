@@ -746,7 +746,14 @@ void StackWalkerMainWnd::OnCopyFunctionDetails(wxCommandEvent&) {
   if (!wxTheClipboard->Open()) {
     return;
   }
-  wxTheClipboard->SetData(new wxTextDataObject(m_currentFunctionModule + " " + m_currentSourceFile + " " + m_currentFunction));
+  wxString toClipBoard; 
+  if (m_sourceEdit->HasFocus()) {
+    toClipBoard = m_sourceEdit->GetSelectedText();
+  }
+  if (toClipBoard.empty()) {
+    toClipBoard = m_currentFunctionModule + " " + m_currentSourceFile + " " + m_currentFunction;
+  }
+  wxTheClipboard->SetData(new wxTextDataObject(toClipBoard));
   wxTheClipboard->Close();  
 }
 
@@ -871,7 +878,7 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   if (line >= caller->m_functionSample->m_minLine && line <= caller->m_functionSample->m_maxLine) {
     m_sourceEdit->GotoLine(line);
   }
-  const int start = m_sourceEdit->PositionFromLine(line-1);
+  const int start = m_sourceEdit->PositionFromLine(line - 1);
   const int end = m_sourceEdit->PositionFromLine(line);
   m_sourceEdit->SetSelection(start, end);
   m_sourceEdit->ShowLineNumbers();
