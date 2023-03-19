@@ -521,11 +521,11 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, int maxDepth, const CONTEXT *con
   if (context == NULL)
   {
     // If no context is provided, capture the context
-    if (hThread == GetCurrentThread())
+    /*if (hThread == GetCurrentThread())
     {
       GET_CURRENT_CONTEXT(c, USED_CONTEXT_FLAGS);
     }
-    else
+    else*/
     {
       SuspendThread(hThread);
       memset(&c, 0, sizeof(CONTEXT));

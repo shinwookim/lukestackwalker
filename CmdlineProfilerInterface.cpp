@@ -10,6 +10,7 @@
 #include <wx/filename.h>
 #include <filesystem>
 
+
 static  HANDLE s_hMapFile = INVALID_HANDLE_VALUE;
 static char *s_pBuf = 0;
 static wxString s_sharedMemFileName;
@@ -102,14 +103,18 @@ bool SampleWithCommandLineProfiler(ProfilerSettings *settings, unsigned int proc
   wchar_t exeFileName[MAX_PATH];
   GetModuleFileName(0, exeFileName, _countof(exeFileName));
   wxFileName exeName(exeFileName);
-  wxString exeDir = exeName.GetPath(wxPATH_GET_VOLUME|| wxPATH_GET_SEPARATOR);
+  wxString exeDir = exeName.GetPath(wxPATH_GET_VOLUME || wxPATH_GET_SEPARATOR);
+
+  std::error_code ec;
+  auto path = std::filesystem::temp_directory_path(ec);
+  wxString tempDir = path.c_str();
   const DWORD id = GetCurrentProcessId();
   wchar_t buf[2048];
   swprintf(buf, _countof(buf), L"%d-tmp", id);
   // save settings to temp file
   wxString subdir = L"cmdline-profiler\\";
-  s_settingsName = exeDir + subdir + wxString(buf) + wxString(L".lsp");
-  s_resultsName = exeDir + subdir + wxString(buf) + wxString(L".lsd");
+  s_settingsName = tempDir + wxString(buf) + wxString(L".lsp");
+  s_resultsName = tempDir +  wxString(buf) + wxString(L".lsd");
 #ifdef _DEBUG
   wxString cmdLineProfiler = exeDir + subdir + L"cmdline-profilerD.exe";
 #else
