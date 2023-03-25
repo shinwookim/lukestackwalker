@@ -1,4 +1,4 @@
-Copyright (c) 2008-2021, Sami Sallinen
+Copyright (c) 2008-2023, Sami Sallinen
 All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -38,5 +38,7 @@ Silk Icons by Mark James http://www.famfamfam.com/lab/icons/silk/, licensed unde
 
 Microsoft debugging tools for Windows redistributable components, redistributed under 'MICROSOFT SOFTWARE LICENSE TERMS'
 
-Built using Microsoft Visual Studio 2019 Community
+Zydis Disassembler (c) 2014-2021 Florian Bernd, Joel Höner, licensed under the MIT license.
+
+Built using Microsoft Visual Studio 2022 Community
 

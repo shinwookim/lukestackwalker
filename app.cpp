@@ -873,7 +873,7 @@ bool StackWalkerMainWnd::ShowDisassembly(const std::wstring &function, const std
       ))) {
         char buf[256];
         if (g_bSamplesAreFromX86) {
-          sprintf(buf, "%08x %s\n", (unsigned int)runtime_address, instruction.text);
+          sprintf(buf, "%08X %s\n", (unsigned int)runtime_address, instruction.text);
         } else {
           sprintf(buf, "%016" PRIX64 "  %s\n", runtime_address, instruction.text);
         }
@@ -898,6 +898,7 @@ bool StackWalkerMainWnd::ShowDisassembly(const std::wstring &function, const std
       m_assemblyEdit->GotoLine(maxSamplesLine);
     }
   }
+  m_assemblyEdit->InitializePrefs("Assembler");
   m_assemblyEdit->SetReadOnly(true);
   m_assemblyEdit->Thaw();
   return bRet;
@@ -907,6 +908,9 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   m_sourceEdit->SetReadOnly(false);
   m_sourceEdit->Freeze();
   bool bGotSource = false;
+  if (m_sourceEdit->GetFilename() == caller->m_functionSample->m_fileName.c_str() && !caller->m_functionSample->m_fileName.empty()) {
+    bGotSource = true;
+  }
   if ((m_sourceEdit->GetFilename() != caller->m_functionSample->m_fileName.c_str()) || caller->m_functionSample->m_fileName.empty()) {
     m_sourceEdit->ClearAll();
     m_sourceEdit->SetFilename("");
@@ -924,14 +928,11 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
     }
   }
 
-  
-
   int line = caller->m_lineNumber;
-
   m_currentFunction = caller->m_functionSample->m_functionName;
   m_currentFunctionModule = caller->m_functionSample->m_moduleName;
   
-  bool bGotDisassembly = ShowDisassembly(caller->m_functionSample->m_functionName, caller->m_functionSample->m_moduleName);    
+  const bool bGotDisassembly = ShowDisassembly(caller->m_functionSample->m_functionName, caller->m_functionSample->m_moduleName);    
 
   if (bGotDisassembly && !bGotSource) {
     m_editNotebook->SetSelection(1);
@@ -940,8 +941,6 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   if (!bGotDisassembly && bGotSource) {
     m_editNotebook->SetSelection(0);
   }
-  
-
 
   if (caller->m_functionSample == m_currentActiveFs) {
     int maxSampleCount = 0;

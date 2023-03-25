@@ -138,7 +138,7 @@ public:
     
 
     bool ShowDisassembly(const std::wstring& function, const std::wstring& module);
-    virtual void OnClickCaller(Caller *caller) override;
+    void OnClickCaller(Caller *caller) override;
 
     void ThreadSelectionChanged();
     void LoadSettings(const wchar_t *fileName);

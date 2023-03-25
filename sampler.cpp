@@ -21,6 +21,7 @@
 #include <set>
 #include <vector>
 #include <wx/base64.h>
+#include "dbghelp.h"
 
 std::map<unsigned int, ThreadSampleInfo> g_threadSamples;
 std::map<unsigned long long, ProcessMemoryBlock> g_targetProcessMemory;
@@ -37,6 +38,7 @@ public:
   ThreadSampleInfo *m_currThreadContext = nullptr;
   ProfilerProgressStatus *m_status;
   std::set<DWORD64> m_complainedAddresses;
+  std::vector<unsigned char> m_symbolBuffer2;
 
   MyStackWalker(int options, DWORD dwProcessId, HANDLE hProcess, LPCWSTR debugInfoPath, LPCWSTR symbolSereverCachePath,  ProfilerProgressStatus *status) :
     StackWalker(options, debugInfoPath, symbolSereverCachePath, dwProcessId, hProcess) {
@@ -64,9 +66,46 @@ public:
 
   virtual void OnOutput(const wchar_t *szText) { LogMessage(false, szText); }
 
-  void ReadMemory(unsigned long long addr, int len, wchar_t *symbol, wchar_t *module) {
+  std::wstring SymbolFromAddress(unsigned long long addr) {
+    if (m_symbolBuffer2.size() < sizeof(SYMBOL_INFOW) + 4 * STACKWALK_MAX_NAMELEN) {
+      m_symbolBuffer2.resize(sizeof(SYMBOL_INFOW) + 4 * STACKWALK_MAX_NAMELEN);
+    }
+    SYMBOL_INFOW *pSym = (SYMBOL_INFOW*)&m_symbolBuffer2[0];
+    memset(pSym, 0, sizeof(SYMBOL_INFOW) + 2);
+    pSym->SizeOfStruct = sizeof(SYMBOL_INFOW);
+    pSym->MaxNameLen = 2 * STACKWALK_MAX_NAMELEN - 1;
+    DWORD64 offset;
+    if (SymFromAddrW(this->m_hProcess, addr, &offset, pSym) != FALSE) {
+      return pSym->Name;
+    }
+    return L"";
+  }
+
+
+  void ReadMemory(unsigned long long addr, int len, wchar_t *symbol, wchar_t *module, bool bProbeLength) {
     if (g_targetProcessMemory.find(addr) != g_targetProcessMemory.end())
       return;
+    
+    if (bProbeLength) {
+      int lowOffset = 0;
+      constexpr int c_maxSize = 32768;
+      int highOffset = c_maxSize;
+      std::wstring baseSymbol = SymbolFromAddress(addr);      
+      while (highOffset > lowOffset+8) {
+        int test = (highOffset + lowOffset) / 2;
+        auto testSymbol = SymbolFromAddress(addr + test);
+        if (testSymbol == baseSymbol) {
+          lowOffset = test;          
+        } else {
+          highOffset = test;
+        }
+      }
+      len = highOffset;
+      /*wchar_t text[512];
+      wsprintf(text, L"Symbol:%s probed len:%d", symbol, len);
+      LogMessage(false, text);*/
+    }
+
     auto& data = g_targetProcessMemory[addr];
     data.start = addr;
     data.mem.resize(len);
@@ -115,16 +154,15 @@ public:
       if (it == m_currThreadContext->m_topOfStackEIPSamples.end()) {
         m_currThreadContext->m_topOfStackEIPSamples[entry.offset] = 1;
         unsigned long long funcStart = entry.offset - entry.offsetFromSmybol;
-        int funcLen = 16384;
-        if (name != addrbuf && entry.funcLen) {          
+        int funcLen = 4096;
+        if (name != addrbuf && entry.funcLen) {
           funcLen = entry.funcLen;
         }
-        ReadMemory(funcStart, funcLen, name, entry.moduleName);
+        ReadMemory(funcStart, funcLen, name, entry.moduleName, name != addrbuf && !entry.funcLen);
       } else {
         it->second++;
       }
     }
-
 
 
     if (name[0]) {
@@ -253,7 +291,7 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, LPCWSTR symbolSe
     return 0;
 
 #ifdef _M_X64
-  g_bMachineIsX86 = false;
+  g_bSamplesAreFromX86 = false;
 #else 
   g_bSamplesAreFromX86 = true;
 #endif
@@ -1065,13 +1103,15 @@ bool SaveSampleData(const wxString &fn) {
       out << endl;
     }
 
-    out << "Top-of-stack-IP-samples " << tsi->m_topOfStackEIPSamples.size() << endl;
+    out << "Top-of-stack-IP-samples ";
+    out.operator << (tsi->m_topOfStackEIPSamples.size()) << endl;
     for (auto& s : tsi->m_topOfStackEIPSamples) {
       out.operator << (s.first) << " " << s.second << endl;
     }
   }
   
-  out << "Memory_dumps " << g_targetProcessMemory.size() << endl;
+  out << "Memory_dumps ";
+  out.operator << (g_targetProcessMemory.size()) << endl;
   for (auto& dump : g_targetProcessMemory) {
     out << "Name " << dump.second.symbol << endl;
     out << "Module " << dump.second.module << endl;
