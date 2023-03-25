@@ -601,6 +601,7 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, int maxDepth, const CONTEXT *con
     csEntry.lineNumber = 0;
     csEntry.loadedImageName[0] = 0;
     csEntry.moduleName[0] = 0;
+    csEntry.funcLen = 0;
     if (s.AddrPC.Offset == s.AddrReturn.Offset)
     {
       this->OnDbgHelpErr("StackWalk64-Endless-Callstack!", 0, s.AddrPC.Offset);
@@ -655,6 +656,7 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, int maxDepth, const CONTEXT *con
           break;
         case SymPdb:
           csEntry.symTypeString = "PDB";
+          csEntry.funcLen = pSym->Size;
           break;
         case SymExport:
           csEntry.symTypeString = "-exported-";

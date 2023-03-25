@@ -58,10 +58,15 @@ class StackWalkerMainWnd : public wxFrame, public CallStackViewClickCallback {
   MyGrid *m_resultsGrid;
   Edit *m_sourceEdit;
   EditParent *m_editParent;
+
+  Edit* m_assemblyEdit;
+  EditParent* m_assemblyEditParent;
+
   wxSplitterWindow *m_horzSplitter;
   wxSplitterWindow *m_vertSplitter; 
   CallStackView *m_callstackView;
   wxNotebook *m_bottomNotebook;
+  wxNotebook* m_editNotebook;
   wxToolBar *m_toolbar;
   void ShowChildWindows(bool bshow);
   double m_zoom;
@@ -132,6 +137,7 @@ public:
     void OnUpdateMenuItemSamplesAsPercentage(wxUpdateUIEvent& event);
     
 
+    bool ShowDisassembly(const std::wstring& function, const std::wstring& module);
     virtual void OnClickCaller(Caller *caller) override;
 
     void ThreadSelectionChanged();

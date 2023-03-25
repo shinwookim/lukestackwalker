@@ -33,8 +33,6 @@
 // LineSampleView
 //----------------------------------------------------------------------------
 
-static FileLineInfo *s_pfli = 0;
-int s_maxSamplesPerLine = 0;
 
 enum {LINESAMPLEWIDTH = 58, EDITHEADERHEIGHT=19};
 
@@ -82,7 +80,7 @@ void LineSampleView::OnDraw(wxPaintDC &dc) {
   dc.SetBrush(bkBrush);
   dc.SetFont(*wxNORMAL_FONT);
   
-  if (!s_pfli || !g_displayedSampleInfo) {
+  if (!m_pfli || !g_displayedSampleInfo) {
     dc.DrawRectangle(2, y, LINESAMPLEWIDTH, y+sz.y);
     return;
   }
@@ -94,20 +92,20 @@ void LineSampleView::OnDraw(wxPaintDC &dc) {
     const wxRect rectBase(2, y, LINESAMPLEWIDTH, lh);
     dc.SetBrush(bkBrush);
     dc.DrawRectangle(rectBase);
-    if (((int)s_pfli->m_lineSamples.size() > l+1)) {
-      if(s_pfli->m_lineSamples[l+1].m_sampleCount) {
+    if (((int)m_pfli->m_lineSamples.size() > l+1)) {
+      if(m_pfli->m_lineSamples[l+1].m_sampleCount) {
         wxRect rectBar(4, y+1, LINESAMPLEWIDTH, lh-4);
-        const double perc = (double)s_pfli->m_lineSamples[l+1].m_sampleCount / (s_maxSamplesPerLine?s_maxSamplesPerLine:1);
+        const double perc = (double)m_pfli->m_lineSamples[l+1].m_sampleCount / (m_maxSamplesPerLine?m_maxSamplesPerLine:1);
         rectBar.width = (int)(rectBar.width * perc);
 
         wxColor ec = *wxRED;
         wxColor sc = *wxGREEN;
         wxColour barEndC = GetGradientEndColorByFraction(sc, ec, perc);                      
         dc.GradientFillLinear(rectBar, sc, barEndC);
-        if (m_bShowSamplesAsSampleCounts) {                    
-          sprintf(buf, "%d", s_pfli->m_lineSamples[l+1].m_sampleCount);
+        if (m_bShowSamplesAsSampleCounts) {
+          sprintf(buf, "%d", m_pfli->m_lineSamples[l+1].m_sampleCount);
         } else {
-          sprintf(buf, "%0.2lf%%", (100.0 * s_pfli->m_lineSamples[l+1].m_sampleCount)/(totalSamples?totalSamples:1));
+          sprintf(buf, "%0.2lf%%", (100.0 * m_pfli->m_lineSamples[l+1].m_sampleCount)/(totalSamples?totalSamples:1));
         }
         dc.DrawText(buf, 5, y);
       }
@@ -423,6 +421,28 @@ bool Edit::LoadFile ()
 #endif // wxUSE_FILEDLG
 }
 
+void LineSampleView::UpdateMaxSamplesPerLine() {
+  if (m_pfli) {
+    m_maxSamplesPerLine = 0;
+    for (size_t i = 0; i < m_pfli->m_lineSamples.size(); i++) {
+      if (m_pfli->m_lineSamples[i].m_sampleCount > m_maxSamplesPerLine)
+        m_maxSamplesPerLine = m_pfli->m_lineSamples[i].m_sampleCount;
+    }
+  }
+}
+
+
+void Edit::SetEditContents(const wxString& data, FileLineInfo* pfli) {
+  Freeze();
+  ClearAll();
+  EmptyUndoBuffer();  
+  InsertText(0, data);
+  m_pLineSampleView->m_pfli = pfli;
+  m_pLineSampleView->UpdateMaxSamplesPerLine();
+  m_LineNrMargin = 0;
+  Thaw();
+}
+
 bool Edit::LoadFile (wxString filename, wxString openFrom) {
 
   // load file in edit and clear undo
@@ -433,10 +453,10 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
   if (g_displayedSampleInfo) {
     const auto it =  g_displayedSampleInfo->m_lineSamples.find(filename.wc_str());  
     if (it != g_displayedSampleInfo->m_lineSamples.end()) {
-      s_pfli = &it->second;
+      m_pLineSampleView->m_pfli = &it->second;
     }
   } else {
-    s_pfli = 0;
+    m_pLineSampleView->m_pfli = 0;
   }
 
   ClearAll ();
@@ -451,7 +471,7 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
     file.Open(filename);
   }
   if (!file.IsOpened()) {
-    s_pfli = 0;
+    m_pLineSampleView->m_pfli = 0;
     m_LineNrMargin = 0;
     ShowLineNumbers();
     Thaw();
@@ -468,12 +488,9 @@ bool Edit::LoadFile (wxString filename, wxString openFrom) {
     return false;
   }
 
-  s_maxSamplesPerLine = 0;
-  if (s_pfli) {
-    for (int i = 0; i < (int)s_pfli->m_lineSamples.size(); i++) {
-      if (s_pfli->m_lineSamples[i].m_sampleCount > s_maxSamplesPerLine)
-        s_maxSamplesPerLine = s_pfli->m_lineSamples[i].m_sampleCount;
-    }
+  
+  if (m_pLineSampleView->m_pfli) {
+    m_pLineSampleView->UpdateMaxSamplesPerLine();    
   }
   
  

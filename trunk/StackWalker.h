@@ -105,6 +105,7 @@ protected:
     WCHAR moduleName[STACKWALK_MAX_NAMELEN];
     DWORD64 baseOfImage;
     WCHAR loadedImageName[STACKWALK_MAX_NAMELEN];
+    DWORD funcLen;
   } CallstackEntry;
 
   enum CallstackEntryType {firstEntry, nextEntry, lastEntry};

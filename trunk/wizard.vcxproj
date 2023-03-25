@@ -77,7 +77,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>graphviz\include\graphviz;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_NDEBUG;__WXMSW__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=_WIN32_WINNT_WIN7;GVDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ZYDIS_STATIC_BUILD;WIN32;_NDEBUG;__WXMSW__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=_WIN32_WINNT_WIN7;GVDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -172,6 +172,7 @@
     <ClCompile Include="sampler.cpp" />
     <ClCompile Include="StackWalker.cpp" />
     <ClCompile Include="wizard.cpp" />
+    <ClCompile Include="Zydis\Zydis.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="wizard.rc" />
@@ -203,6 +204,7 @@
     <ClInclude Include="StackWalker.h" />
     <ClInclude Include="targetsxs.h" />
     <ClInclude Include="wizard.h" />
+    <ClInclude Include="Zydis\Zydis.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />

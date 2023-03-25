@@ -48,6 +48,9 @@ struct LineInfo {
   LineInfo() noexcept {
     m_sampleCount = 0;
   }
+  LineInfo(int count) noexcept {
+    m_sampleCount = count;
+  }
   int m_sampleCount;
   //std::list<Caller> m_callers;
 };
@@ -77,10 +80,18 @@ struct FunctionSample { // data struct for top-of-stack samples
   bool m_bIgnoredFromDisplay;
 };
 
+struct ProcessMemoryBlock {
+  std::wstring symbol;
+  std::wstring module;
+  unsigned long long start = 0;
+  std::vector<unsigned char> mem;
+};
+
 struct ThreadSampleInfo {
   std::map<std::wstring, FunctionSample> m_functionSamples;
   std::map<std::wstring, FileLineInfo> m_lineSamples;
   std::list<FunctionSample *> m_sortedFunctionSamples;
+  std::map<unsigned long long, int> m_topOfStackEIPSamples;
   int m_totalSamples;
   __int64 m_kernelTimeStart;
   __int64 m_userTimeStart;
@@ -112,8 +123,9 @@ struct ThreadSampleInfo {
 
 
 extern bool g_bNewProfileData;
-
+extern bool g_bSamplesAreFromX86;
 extern std::map<unsigned int, ThreadSampleInfo> g_threadSamples;
+extern std::map<unsigned long long, ProcessMemoryBlock> g_targetProcessMemory;
 
 bool SampleProcess(ProfilerSettings *settings, ProfilerProgressStatus *status, unsigned int processId);
 

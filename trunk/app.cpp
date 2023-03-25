@@ -42,6 +42,7 @@
 #include <wx/confbase.h>
 #include <wx/fileconf.h>
 #include <wx/clipbrd.h>
+#include "Zydis\Zydis.h"
 
 
 static wxTextCtrl *s_pLogCtrl = 0;
@@ -552,16 +553,26 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
   m_horzSplitter = new wxSplitterWindow(m_vertSplitter, HorizontalSplitter, wxDefaultPosition, wxDefaultSize, wxSP_3D | wxSP_3DBORDER | wxSP_LIVE_UPDATE);
   
 
-  m_editParent = new EditParent(m_horzSplitter, wxID_ANY);
+  m_editNotebook = new wxNotebook(m_horzSplitter, wxID_ANY,
+    wxDefaultPosition, wxDefaultSize, wxNB_TOP);
 
+
+  m_editParent = new EditParent(m_editNotebook, wxID_ANY);
   m_sourceEdit = m_editParent->GetEdit();
+
+  m_editNotebook->AddPage(m_editParent, "Source", false);
+
+  m_assemblyEditParent = new EditParent(m_editNotebook, wxID_ANY);
+  m_assemblyEdit = m_assemblyEditParent->GetEdit();
+
+  m_editNotebook->AddPage(m_assemblyEditParent, "Disassembly", false);
   
   m_resultsGrid = new MyGrid( m_horzSplitter,
     Results_Grid,
     wxDefaultPosition, wxDefaultSize);
 
   m_vertSplitter->SplitHorizontally(m_horzSplitter, m_bottomNotebook);  
-  m_horzSplitter->SplitVertically(m_resultsGrid, m_editParent);
+  m_horzSplitter->SplitVertically(m_resultsGrid, m_editNotebook);
   m_vertSplitter->SetSashPosition(2*GetClientSize().GetHeight()/3, true);
   m_vertSplitter->UpdateSize();
   m_vertSplitter->SetMinimumPaneSize(1);  
@@ -583,6 +594,7 @@ StackWalkerMainWnd::StackWalkerMainWnd(const wxString& title)
 
   m_bWievSamplesAsSampleCounts = !!wxConfigBase::Get()->Read(_T("showSampleCounts"), (long)0);
   m_sourceEdit->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
+  m_assemblyEdit->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
   m_callstackView->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
 
   auto file = wxConfigBase::Get()->Read(_T("lastSettingsFile"), "");
@@ -670,8 +682,8 @@ void StackWalkerMainWnd::OnAbout(wxCommandEvent& WXUNUSED(event)) {
     _T("WxWidgets library Copyright(c) 1992 - 2020 Julian Smart, Vadim Zeitlin, Stefan Csomor, Robert Roebling, and other members of the wxWidgets team.\n"
       "Portions(c) 1996 Artificial Intelligence Applications Institute\n\n")
     _T("Silk Icons by Mark James http://www.famfamfam.com/lab/icons/silk/, licensed under the Creative Commons Attribution 2.5 License\n\n")
-    _T("Microsoft debugging tools for Windows redistributable components, redistributed under 'MICROSOFT SOFTWARE LICENSE TERMS'\n"),
-    
+    _T("Microsoft debugging tools for Windows redistributable components, redistributed under 'MICROSOFT SOFTWARE LICENSE TERMS'\n\n")
+    _T("Zydis Disassembler (c) 2014-2021 Florian Bernd, Joel Höner, licensed under the MIT license.\n"),
     VERSION_MAJOR, VERSION_MINOR, VERSION_BUGFIX);
 
   wxMessageBox(buf, _T("About Luke StackWalker"), wxOK | wxICON_INFORMATION, this);
@@ -790,6 +802,7 @@ void StackWalkerMainWnd::LoadSettings(const wchar_t *fileName) {
     return;
   }
   g_threadSamples.clear();
+  g_targetProcessMemory.clear();
   g_displayedSampleInfo = 0;
   m_currentDataFile = "";
 
@@ -832,9 +845,68 @@ void StackWalkerMainWnd::OnFileLoadSourceFile(wxCommandEvent&) {
   m_sourceEdit->SetReadOnly(true);
 }
 
+bool StackWalkerMainWnd::ShowDisassembly(const std::wstring &function, const std::wstring &module) {
+  bool bRet = false;
+  m_assemblyEdit->SetReadOnly(false);
+  m_assemblyEdit->Freeze();
+  static FileLineInfo fli;
+  fli.m_fileName = L"";
+  fli.m_lineSamples.clear();
+  fli.m_lineSamples.emplace_back(0); // line 0 does not exist so set sample count for it to 0
+  m_assemblyEdit->SetEditContents(L"", &fli);
+  int maxSamplesLine = 0;
+  int maxSamples = 0;
+  for (auto& mem : g_targetProcessMemory) {
+    if (mem.second.symbol == function && mem.second.module == module) {
+      wxString asmString;      
+      ZyanU64 runtime_address = mem.second.start;
+
+      // Loop over the instructions in our buffer. 
+      ZyanUSize offset = 0;
+      ZydisDisassembledInstruction instruction;
+      while (ZYAN_SUCCESS(ZydisDisassembleIntel(
+        /* machine_mode:    */ g_bSamplesAreFromX86?ZYDIS_MACHINE_MODE_LONG_COMPAT_32:ZYDIS_MACHINE_MODE_LONG_64,
+        /* runtime_address: */ runtime_address,
+        /* buffer:          */ &mem.second.mem[0] + offset,
+        /* length:          */ mem.second.mem.size() - offset,
+        /* instruction:     */ &instruction
+      ))) {
+        char buf[256];
+        if (g_bSamplesAreFromX86) {
+          sprintf(buf, "%08x %s\n", (unsigned int)runtime_address, instruction.text);
+        } else {
+          sprintf(buf, "%016" PRIX64 "  %s\n", runtime_address, instruction.text);
+        }
+        asmString += buf;
+        int samples = 0;
+        
+        const auto it = g_displayedSampleInfo->m_topOfStackEIPSamples.find(runtime_address);
+        if (it != g_displayedSampleInfo->m_topOfStackEIPSamples.end()) {
+          samples += it->second;
+        }
+
+        if (samples > maxSamples) {
+          maxSamples = samples;
+          maxSamplesLine = fli.m_lineSamples.size();
+        }
+        fli.m_lineSamples.emplace_back(samples);
+        bRet = true;
+        offset += instruction.info.length;
+        runtime_address += instruction.info.length;        
+      }
+      m_assemblyEdit->SetEditContents(asmString, &fli);
+      m_assemblyEdit->GotoLine(maxSamplesLine);
+    }
+  }
+  m_assemblyEdit->SetReadOnly(true);
+  m_assemblyEdit->Thaw();
+  return bRet;
+}
+
 void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
   m_sourceEdit->SetReadOnly(false);
   m_sourceEdit->Freeze();
+  bool bGotSource = false;
   if ((m_sourceEdit->GetFilename() != caller->m_functionSample->m_fileName.c_str()) || caller->m_functionSample->m_fileName.empty()) {
     m_sourceEdit->ClearAll();
     m_sourceEdit->SetFilename("");
@@ -844,18 +916,32 @@ void StackWalkerMainWnd::OnClickCaller(Caller *caller) {
       m_sourceEdit->LoadFile("");
     } else {
       if (m_settings.m_sourceFileSubstitutions.find(fn) != m_settings.m_sourceFileSubstitutions.end()) {
-        m_sourceEdit->LoadFile(fn, m_settings.m_sourceFileSubstitutions.find(fn)->second);
+        bGotSource = m_sourceEdit->LoadFile(fn, m_settings.m_sourceFileSubstitutions.find(fn)->second);
       } else {
-        m_sourceEdit->LoadFile(fn);
+        bGotSource = m_sourceEdit->LoadFile(fn);
       }
       m_currentSourceFile = m_sourceEdit->GetFilename();
     }
   }
 
+  
+
   int line = caller->m_lineNumber;
 
   m_currentFunction = caller->m_functionSample->m_functionName;
   m_currentFunctionModule = caller->m_functionSample->m_moduleName;
+  
+  bool bGotDisassembly = ShowDisassembly(caller->m_functionSample->m_functionName, caller->m_functionSample->m_moduleName);    
+
+  if (bGotDisassembly && !bGotSource) {
+    m_editNotebook->SetSelection(1);
+  }
+
+  if (!bGotDisassembly && bGotSource) {
+    m_editNotebook->SetSelection(0);
+  }
+  
+
 
   if (caller->m_functionSample == m_currentActiveFs) {
     int maxSampleCount = 0;
@@ -1362,6 +1448,7 @@ void StackWalkerMainWnd::LoadProfileData(const wchar_t *fileName) {
   if (!LoadSampleData(fileName)) {
     wxMessageBox(wxT("Loading the profile data failed."), wxT("Notification"));
     g_threadSamples.clear();
+    g_targetProcessMemory.clear();
   } else {
     m_fileHistory.AddFileToHistory(fileName); 
     m_currentDataFile = fileName;
@@ -1465,6 +1552,7 @@ void StackWalkerMainWnd::OnViewSamplesAsSampleCounts(wxCommandEvent&) {
     return;
   m_bWievSamplesAsSampleCounts = true;
   m_sourceEdit->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
+  m_assemblyEdit->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
   m_callstackView->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
   RefreshGridView();
 }
@@ -1474,6 +1562,7 @@ void StackWalkerMainWnd::OnViewSamplesAsPercentage(wxCommandEvent&) {
     return;
   m_bWievSamplesAsSampleCounts = false;
   m_sourceEdit->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
+  m_assemblyEdit->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
   m_callstackView->SetShowSamplesAsSampleCounts(m_bWievSamplesAsSampleCounts);
   RefreshGridView();
 }

@@ -34,6 +34,7 @@
 
 class EditProperties;
 class Edit;
+struct FileLineInfo;
 
 
 wxColour GetGradientEndColorByFraction(const wxColour &startC, const wxColour &endC, double frac);
@@ -42,11 +43,15 @@ wxColour GetGradientEndColorByFraction(const wxColour &startC, const wxColour &e
 class LineSampleView : public wxWindow {
   Edit *m_pEdit = nullptr;
   bool m_bShowSamplesAsSampleCounts = true;
+
 public:
   void SetShowSamplesAsSampleCounts(bool bShowSampleCounts) {m_bShowSamplesAsSampleCounts = bShowSampleCounts; Refresh();}
 	LineSampleView(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxPanelNameStr);	
 	void OnPaint(wxPaintEvent& event);
   void SetEdit(Edit *pe) {m_pEdit = pe;}
+  FileLineInfo* m_pfli = 0;
+  int m_maxSamplesPerLine = 0;
+  void UpdateMaxSamplesPerLine();
 protected:
 	DECLARE_EVENT_TABLE()
   void OnDraw(wxPaintDC &dc);  
@@ -106,6 +111,7 @@ public:
     bool LoadFile (wxString filename, wxString openFrom = "");
     wxString GetFilename () {return m_filename;};
     void SetFilename (const wxString &filename) {m_filename = filename;};
+    void SetEditContents(const wxString &data, FileLineInfo *pfli);
     void OnPainted(wxStyledTextEvent &);
     void SetLineSampleView (LineSampleView *pv) noexcept {m_pLineSampleView = pv;}
     LineSampleView *GetLineSampleView() noexcept {return m_pLineSampleView;}

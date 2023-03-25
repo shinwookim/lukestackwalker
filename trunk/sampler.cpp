@@ -20,8 +20,11 @@
 #include <stdarg.h>
 #include <set>
 #include <vector>
+#include <wx/base64.h>
 
 std::map<unsigned int, ThreadSampleInfo> g_threadSamples;
+std::map<unsigned long long, ProcessMemoryBlock> g_targetProcessMemory;
+bool g_bSamplesAreFromX86 = false;
 bool g_bNewProfileData = false;
 
 class MyStackWalker : public StackWalker
@@ -61,10 +64,24 @@ public:
 
   virtual void OnOutput(const wchar_t *szText) { LogMessage(false, szText); }
 
+  void ReadMemory(unsigned long long addr, int len, wchar_t *symbol, wchar_t *module) {
+    if (g_targetProcessMemory.find(addr) != g_targetProcessMemory.end())
+      return;
+    auto& data = g_targetProcessMemory[addr];
+    data.start = addr;
+    data.mem.resize(len);
+    data.symbol = symbol;
+    data.module = module;
+    SIZE_T nRead = 0;
+    ReadProcessMemory(m_hProcess, (LPCVOID)addr, &data.mem[0], len, &nRead);
+    data.mem.resize(nRead); // if we failed to read the memory, we set the lock size to 0 so we won't slow down the profiling by repeatedly trying to read it
+  }
+
   void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry) {  
     if ( (eType == lastEntry) || (entry.offset == 0) ) {
       return;
     }
+
     wchar_t *name = L"";
     wchar_t addrbuf[256];
     if (entry.name[0] == 0)
@@ -92,6 +109,22 @@ public:
     } else if (eType == firstEntry) {
       m_bSkipFirstEntry = false;
     }
+
+    if (eType == firstEntry) {
+      auto it = m_currThreadContext->m_topOfStackEIPSamples.find(entry.offset);
+      if (it == m_currThreadContext->m_topOfStackEIPSamples.end()) {
+        m_currThreadContext->m_topOfStackEIPSamples[entry.offset] = 1;
+        unsigned long long funcStart = entry.offset - entry.offsetFromSmybol;
+        int funcLen = 16384;
+        if (name != addrbuf && entry.funcLen) {          
+          funcLen = entry.funcLen;
+        }
+        ReadMemory(funcStart, funcLen, name, entry.moduleName);
+      } else {
+        it->second++;
+      }
+    }
+
 
 
     if (name[0]) {
@@ -219,11 +252,18 @@ double ProfileProcess(DWORD dwProcessId, LPCWSTR debugInfoPath, LPCWSTR symbolSe
   if (hProcess == INVALID_HANDLE_VALUE)
     return 0;
 
+#ifdef _M_X64
+  g_bMachineIsX86 = false;
+#else 
+  g_bSamplesAreFromX86 = true;
+#endif
+
   // Initialize StackWalker...
   int options = MyStackWalker::OptionsAll;
   if (!bConnectToServer) {
     options &= ~MyStackWalker::SymUseSymSrv;
   }
+  
   MyStackWalker sw(options, dwProcessId, hProcess, debugInfoPath, symbolServerCachePath, status);
   sw.LoadModules();
   sw.SetAbortAtPCOutsideKnownModules(bAbortWhenOutsideKnownModules);
@@ -420,12 +460,23 @@ void ProduceDisplayData() {
     summedSampleInfo.m_functionSamples.clear();
     summedSampleInfo.m_lineSamples.clear();
     summedSampleInfo.m_sortedFunctionSamples.clear();
+    summedSampleInfo.m_topOfStackEIPSamples.clear();
     for (std::map<unsigned int, ThreadSampleInfo>::iterator it = g_threadSamples.begin();
        it != g_threadSamples.end(); it++) {
        ThreadSampleInfo *tsi = &it->second;
        if (it->second.m_bSelectedForDisplay) {
+         // sum top of stack assembly addresses sampled         
+         for (auto& i : tsi->m_topOfStackEIPSamples) {
+           if (summedSampleInfo.m_topOfStackEIPSamples.find(i.first) == summedSampleInfo.m_topOfStackEIPSamples.end()) {
+             summedSampleInfo.m_topOfStackEIPSamples[i.first] = i.second;
+           } else {
+             summedSampleInfo.m_topOfStackEIPSamples[i.first] += i.second;
+           }
+         }
+
          // sum function sample data
          summedSampleInfo.m_totalSamples += tsi->m_totalSamples;
+
 
          for (auto fsit = tsi->m_functionSamples.begin();
               fsit != tsi->m_functionSamples.end(); ++fsit) {
@@ -616,6 +667,7 @@ wchar_t *MergeEnvironment(ProfilerSettings *settings) {
 bool SampleProcess(ProfilerSettings *settings, ProfilerProgressStatus *status, unsigned int processId) {          
 
   g_threadSamples.clear();
+  g_targetProcessMemory.clear();
   status->nSamplesTaken = 0;
   status->nTotalModules = 0;
   status->nLoadedModules = 0;
@@ -695,10 +747,9 @@ bool SampleProcess(ProfilerSettings *settings, ProfilerProgressStatus *status, u
   return true;
 }
 
-
 #include <wx/wfstream.h>
 #include <wx/txtstrm.h>
-enum {LSD_FILEVERSION = 2};
+enum {LSD_FILEVERSION = 3};
 bool LoadSampleData(const wxString &fn) {
 
   g_bNewProfileData = false;
@@ -706,6 +757,7 @@ bool LoadSampleData(const wxString &fn) {
   wxTextInputStream in(file_input);
   
   g_threadSamples.clear();
+  g_targetProcessMemory.clear();
 
   if (!file_input.IsOk())
     return false;
@@ -715,6 +767,16 @@ bool LoadSampleData(const wxString &fn) {
   }
   int fileVersion;
   in >> fileVersion;
+
+  if (fileVersion > 2) {
+    if (in.ReadWord() != "Samples_are_from_X86") {
+      return false;
+    } 
+    int temp;
+    in >> temp;
+    g_bSamplesAreFromX86 = !!temp;
+  }
+
   if (in.ReadWord() != "Threads") {
     return false;
   }
@@ -852,6 +914,61 @@ bool LoadSampleData(const wxString &fn) {
       }
       std::string endOfLine = in.ReadLine();
     }
+
+    if (fileVersion > 2) {
+      if (in.ReadWord() != "Top-of-stack-IP-samples") {
+        return false;
+      } 
+      int temp;
+      in >> temp;
+      for (int j = 0; j < temp; ++j) {      
+        unsigned long long addr;
+        int samples;
+        in.operator >> (addr);
+        in >> samples;
+        tsi->m_topOfStackEIPSamples[addr] = samples;
+      }
+    }
+  }  
+
+  if (fileVersion > 2) {
+    if (in.ReadWord() != "Memory_dumps") {
+      return false;
+    }
+    int nDumps = 0; 
+    in >> nDumps;  
+    for (int i = 0; i < nDumps; i++) {
+      wxString word;
+      word = in.ReadWord();
+      if (word != "Name") {
+        return false;
+      }
+      auto name = in.ReadLine();
+      if (in.ReadWord() != "Module") {
+        return false;
+      }
+      auto module = in.ReadLine();
+      if (in.ReadWord() != "Address") {
+        return false;
+      }
+      long long addr;
+      in.operator >> (addr);
+      if (in.ReadWord() != "Size") {
+        return false;
+      }
+      int size = 0;
+      in >> size;
+      auto& dump = g_targetProcessMemory[addr];
+      dump.symbol = name;
+      dump.module = module;
+      dump.start = addr;
+      dump.mem.resize(size);
+      wxString encoded = in.ReadLine();
+      auto decoded = wxBase64Decode(&dump.mem[0], dump.mem.size(), encoded);            
+      if ((int)decoded != size) {
+        return false;
+      }
+    }
   }
   
   if (g_threadSamples.size()) 
@@ -872,6 +989,9 @@ bool SaveSampleData(const wxString &fn) {
   wxTextOutputStream out(file_output);
   out << "Luke_Stackwalker_Data_(LSD)_file_version ";
   out << LSD_FILEVERSION << endl;
+
+  out << "Samples_are_from_X86 " << (int)g_bSamplesAreFromX86 << endl;
+
   out << "Threads ";
   out << (wxUint32) g_threadSamples.size() << endl;
 
@@ -944,6 +1064,23 @@ bool SaveSampleData(const wxString &fn) {
       }
       out << endl;
     }
+
+    out << "Top-of-stack-IP-samples " << tsi->m_topOfStackEIPSamples.size() << endl;
+    for (auto& s : tsi->m_topOfStackEIPSamples) {
+      out.operator << (s.first) << " " << s.second << endl;
+    }
+  }
+  
+  out << "Memory_dumps " << g_targetProcessMemory.size() << endl;
+  for (auto& dump : g_targetProcessMemory) {
+    out << "Name " << dump.second.symbol << endl;
+    out << "Module " << dump.second.module << endl;
+    out << "Address ";
+    out.operator << (dump.second.start) << endl;
+    out << "Size " << (int)dump.second.mem.size() << endl;
+    auto encoded = wxBase64Encode(&dump.second.mem[0], dump.second.mem.size());
+    out << encoded;    
+    out << endl;
   }
 
   g_bNewProfileData = false;
