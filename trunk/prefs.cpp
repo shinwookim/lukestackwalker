@@ -96,6 +96,19 @@ wxChar* PythonWordlist2 =
     _T("STRINGTABLE STYLE TEXTINCLUDE VALUE VERSION VERSIONINFO VIRTKEY");
 
 
+
+// ASM
+wxChar* ASMWordlist1 =
+_T("asm eax ebx ecx edx cs ds es fs gs ss esi edi ebp eip esp ax bx cx dx ")
+_T("ah al bh bl ch cl dh dl rax rbx rcx rdx rbp rsi rdi rsp ")
+_T("r8 r9 r10 r11 r12 r14 r14 r15 ")
+_T("mm0 mm1 mm2 mm3 mm4 mm5 mm6 mm7 ")
+_T("xmm0 xmm1 xmm2 xmm3 xmm4 xmm5 xmm6 xmm7 xmm8 xmm9 xmm10 xmm11 xmm12 xmm13 xmm14 xmm15 ")
+_T("ymm0 ymm1 ymm2 ymm3 ymm4 ymm5 ymm6 ymm7 ymm8 ymm9 ymm10 ymm11 ymm12 ymm13 ymm14 ymm15 ")
+_T("zmm0 zmm1 zmm2 zmm3 zmm4 zmm5 zmm6 zmm7 zmm8 zmm9 zmm10 zmm11 zmm12 zmm13 zmm14 zmm15 ")
+_T("zmm16 zmm17 zmm18 zmm19 zmm20 zmm21 zmm22 zmm23 zmm24 zmm25 zmm26 zmm27 zmm28 zmm29 zmm30 zmm31");
+
+
 //----------------------------------------------------------------------------
 //! languages
 const LanguageInfo g_LanguagePrefs [] = {
@@ -135,6 +148,42 @@ const LanguageInfo g_LanguagePrefs [] = {
       {-1, NULL},
       {-1, NULL},
       {-1, NULL}},
+     mySTC_FOLD_COMMENT | mySTC_FOLD_COMPACT | mySTC_FOLD_PREPROC},
+     {_T("Assembler"),
+     _T("*.ASM;*.S;"),
+     wxSTC_LEX_CPP,
+     {{mySTC_TYPE_DEFAULT, nullptr},
+      {mySTC_TYPE_COMMENT, nullptr},
+      {mySTC_TYPE_COMMENT_LINE, nullptr},
+      {mySTC_TYPE_COMMENT_DOC, nullptr},
+      {mySTC_TYPE_NUMBER, nullptr},
+      {mySTC_TYPE_WORD1, ASMWordlist1}, // KEYWORDS
+      {mySTC_TYPE_STRING, nullptr},
+      {mySTC_TYPE_CHARACTER, nullptr},
+      {mySTC_TYPE_UUID, nullptr},
+      {mySTC_TYPE_PREPROCESSOR, nullptr},
+      {mySTC_TYPE_OPERATOR, nullptr},
+      {mySTC_TYPE_IDENTIFIER, nullptr},
+      {mySTC_TYPE_STRING_EOL, nullptr},
+      {mySTC_TYPE_DEFAULT, nullptr}, // VERBATIM
+      {mySTC_TYPE_REGEX, nullptr},
+      {mySTC_TYPE_COMMENT_SPECIAL, nullptr}, // DOXY
+      {mySTC_TYPE_WORD2, CppWordlist2}, // EXTRA WORDS
+      {mySTC_TYPE_WORD3, CppWordlist3}, // DOXY KEYWORDS
+      {mySTC_TYPE_ERROR, nullptr}, // KEYWORDS ERROR
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr},
+      {-1, nullptr}},
      mySTC_FOLD_COMMENT | mySTC_FOLD_COMPACT | mySTC_FOLD_PREPROC},
     // Python
     {_T("Python"),

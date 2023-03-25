@@ -27,7 +27,6 @@
 #include "edit.h"        // edit module
 #include "sampledata.h"
 
-#pragma optimize("", off)
 
 //----------------------------------------------------------------------------
 // LineSampleView
