@@ -1,3 +1,6 @@
+Release 1.0.7 March 19th, 2023
+- move temporary files for the 64-bit command line profiler from \program files(x86)\Luke Stackwalker\ to %TEMP% because windows no longer allows writing in the original location.
+
 Release 1.0.6 March 12th, 2023
 -ctrl-c copies selected function details OR source edit control selection, if something is selected and the edit control has focus
 
