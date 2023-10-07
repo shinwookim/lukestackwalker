@@ -1,3 +1,7 @@
+October 7th, 2023
+- Added a signed version of the 1.0.8 installer with the hopes that Windows Defender will complain less about it,
+  Other than the digital signature, the contents are identical to the normal v.1.0.8.
+
 Release 1.0.8 March 25th, 2023
 - added disassembly window that shows samples in top of callstack functions using the Zydis disassembler library
 
